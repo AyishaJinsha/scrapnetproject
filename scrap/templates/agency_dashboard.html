@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">Scrap Dealer Dashboard</h1>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">{{ pending_requests }}</h5>
+                    <p class="card-text">Pending Requests</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">{{ in_progress_requests }}</h5>
+                    <p class="card-text">In-Progress Requests</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">{{ completed_requests }}</h5>
+                    <p class="card-text">Completed Requests</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3>Requests to Review</h3>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Vehicle Registration</th>
+                    <th>Owner</th>
+                    <th>Vehicle Type</th>
+                    <th>Status</th>
+                    <th>Submitted At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for request in requests %}
+                <tr>
+                    <td>{{ request.vehicle.registration_number }}</td>
+                    <td>{{ request.user.username }}</td>
+                    <td>{{ request.vehicle.vehicle_type }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if request.status == 'submitted' %}bg-warning
+                            {% elif request.status == 'reviewed' %}bg-info
+                            {% endif %}">
+                            {{ request.get_status_display }}
+                        </span>
+                    </td>
+                    <td>{{ request.submitted_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        {% if request.status == 'submitted' %}
+                            <a href="{% url 'review_request' request.id %}" class="btn btn-sm btn-primary">Review</a>
+                        {% elif request.status == 'reviewed' %}
+                            <a href="{% url 'forward_request' request.id %}" class="btn btn-sm btn-success">Forward to RTO</a>
+                        {% endif %}
+                        {% if request.vehicle.image %}
+                            <a href="{{ request.vehicle.image.url }}" target="_blank" class="btn btn-sm btn-outline-primary ms-1">View Image</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">No requests to review at this time.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

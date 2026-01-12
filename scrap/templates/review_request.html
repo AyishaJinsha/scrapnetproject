@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Review Request - {{ scrap_request.vehicle.registration_number }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Vehicle Details</h5>
+                            <p><strong>Registration:</strong> {{ scrap_request.vehicle.registration_number }}</p>
+                            <p><strong>Type:</strong> {{ scrap_request.vehicle.vehicle_type }}</p>
+                            <p><strong>Age:</strong> {{ scrap_request.vehicle.age }} years</p>
+                            <p><strong>Mileage:</strong> {{ scrap_request.vehicle.mileage }} km</p>
+                            <p><strong>Owner:</strong> {{ scrap_request.user.username }}</p>
+                            <p><strong>Submitted:</strong> {{ scrap_request.submitted_at|date:"M d, Y H:i" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            {% if scrap_request.vehicle.image %}
+                                <h5>Vehicle Image</h5>
+                                <img src="{{ scrap_request.vehicle.image.url }}" alt="Vehicle Image" class="img-fluid rounded">
+                            {% else %}
+                                <p>No image uploaded</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <hr>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="damage_level" class="form-label">Damage Level</label>
+                                <select name="damage_level" id="damage_level" class="form-select" required>
+                                    <option value="">Select damage level</option>
+                                    <option value="Minor">Minor</option>
+                                    <option value="Moderate">Moderate</option>
+                                    <option value="Severe">Severe</option>
+                                    <option value="Total Loss">Total Loss</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="scrap_price" class="form-label">Scrap Price ($)</label>
+                                <input type="number" step="0.01" name="scrap_price" id="scrap_price" class="form-control" placeholder="Enter scrap price" required>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'agency_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+                            <button type="submit" class="btn btn-primary">Save Review</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

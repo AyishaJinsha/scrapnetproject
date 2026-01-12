@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">RTO Officer Dashboard</h1>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">{{ awaiting_requests }}</h5>
+                    <p class="card-text">Requests Awaiting Verification</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3>Requests for Approval</h3>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Vehicle Registration</th>
+                    <th>Owner</th>
+                    <th>Agency</th>
+                    <th>Damage Level</th>
+                    <th>Scrap Price</th>
+                    <th>Forwarded At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for request in requests %}
+                <tr>
+                    <td>{{ request.vehicle.registration_number }}</td>
+                    <td>{{ request.user.username }}</td>
+                    <td>Agency Review</td>
+                    <td>{{ request.damage_level }}</td>
+                    <td>${{ request.scrap_price }}</td>
+                    <td>{{ request.forwarded_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        <a href="{% url 'approve_request' request.id %}" class="btn btn-sm btn-primary">Review</a>
+                        {% if request.vehicle.image %}
+                            <a href="{{ request.vehicle.image.url }}" target="_blank" class="btn btn-sm btn-outline-primary ms-1">View Image</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">No requests awaiting approval.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

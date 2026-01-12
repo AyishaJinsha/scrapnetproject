@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Submit Vehicle for Scrapping</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.registration_number.id_for_label }}" class="form-label">Registration Number</label>
+                                {{ form.registration_number }}
+                                {% if form.registration_number.errors %}
+                                    <div class="text-danger">{{ form.registration_number.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.vehicle_type.id_for_label }}" class="form-label">Vehicle Type</label>
+                                {{ form.vehicle_type }}
+                                {% if form.vehicle_type.errors %}
+                                    <div class="text-danger">{{ form.vehicle_type.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.age.id_for_label }}" class="form-label">Vehicle Age (years)</label>
+                                {{ form.age }}
+                                {% if form.age.errors %}
+                                    <div class="text-danger">{{ form.age.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.mileage.id_for_label }}" class="form-label">Mileage (km)</label>
+                                {{ form.mileage }}
+                                {% if form.mileage.errors %}
+                                    <div class="text-danger">{{ form.mileage.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.image.id_for_label }}" class="form-label">Vehicle Image</label>
+                            {{ form.image }}
+                            {% if form.image.errors %}
+                                <div class="text-danger">{{ form.image.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">Submit Vehicle</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

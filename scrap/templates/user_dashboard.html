@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">Vehicle Owner Dashboard</h1>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">{{ total_vehicles }}</h5>
+                    <p class="card-text">Total Vehicles</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">{{ pending_requests }}</h5>
+                    <p class="card-text">Pending Requests</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">{{ active_requests }}</h5>
+                    <p class="card-text">Active Requests</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">{{ completed_requests }}</h5>
+                    <p class="card-text">Completed Requests</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>My Requests</h3>
+        <a href="{% url 'submit_vehicle' %}" class="btn btn-primary">Submit New Vehicle</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Vehicle Registration</th>
+                    <th>Vehicle Type</th>
+                    <th>Status</th>
+                    <th>Submitted At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for request in requests %}
+                <tr>
+                    <td>{{ request.vehicle.registration_number }}</td>
+                    <td>{{ request.vehicle.vehicle_type }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if request.status == 'submitted' %}bg-warning
+                            {% elif request.status == 'reviewed' %}bg-info
+                            {% elif request.status == 'forwarded' %}bg-primary
+                            {% elif request.status == 'approved' %}bg-success
+                            {% elif request.status == 'rejected' %}bg-danger
+                            {% endif %}">
+                            {{ request.get_status_display }}
+                        </span>
+                    </td>
+                    <td>{{ request.submitted_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        {% if request.vehicle.image %}
+                            <a href="{{ request.vehicle.image.url }}" target="_blank" class="btn btn-sm btn-outline-primary">View Image</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">No requests found. <a href="{% url 'submit_vehicle' %}">Submit your first vehicle</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

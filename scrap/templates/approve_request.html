@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Review Request - {{ scrap_request.vehicle.registration_number }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Vehicle Details</h5>
+                            <p><strong>Registration:</strong> {{ scrap_request.vehicle.registration_number }}</p>
+                            <p><strong>Type:</strong> {{ scrap_request.vehicle.vehicle_type }}</p>
+                            <p><strong>Age:</strong> {{ scrap_request.vehicle.age }} years</p>
+                            <p><strong>Mileage:</strong> {{ scrap_request.vehicle.mileage }} km</p>
+                            <p><strong>Owner:</strong> {{ scrap_request.user.username }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Agency Assessment</h5>
+                            <p><strong>Damage Level:</strong> {{ scrap_request.damage_level }}</p>
+                            <p><strong>Scrap Price:</strong> ${{ scrap_request.scrap_price }}</p>
+                            <p><strong>Reviewed At:</strong> {{ scrap_request.reviewed_at|date:"M d, Y H:i" }}</p>
+                            {% if scrap_request.vehicle.image %}
+                                <h6>Vehicle Image</h6>
+                                <img src="{{ scrap_request.vehicle.image.url }}" alt="Vehicle Image" class="img-fluid rounded" style="max-height: 200px;">
+                            {% endif %}
+                        </div>
+                    </div>
+                    <hr>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="alert alert-info">
+                            <strong>Decision:</strong> Please review the vehicle details and agency assessment before making a decision.
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'rto_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+                            <div>
+                                <button type="submit" name="action" value="reject" class="btn btn-danger me-2">Reject Request</button>
+                                <button type="submit" name="action" value="approve" class="btn btn-success">Approve Request</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

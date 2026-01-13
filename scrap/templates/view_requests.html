@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>My Requests</h1>
+        <a href="{% url 'submit_vehicle' %}" class="btn btn-primary">Submit New Vehicle</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Request ID</th>
+                    <th>Vehicle Registration</th>
+                    <th>Vehicle Type</th>
+                    <th>Status</th>
+                    <th>Damage Level</th>
+                    <th>Scrap Price</th>
+                    <th>Submitted At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for request in requests %}
+                <tr>
+                    <td>#{{ request.id }}</td>
+                    <td>{{ request.vehicle.registration_number }}</td>
+                    <td>{{ request.vehicle.vehicle_type|title }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if request.status == 'submitted' %}bg-warning
+                            {% elif request.status == 'reviewed' %}bg-info
+                            {% elif request.status == 'forwarded' %}bg-primary
+                            {% elif request.status == 'approved' %}bg-success
+                            {% elif request.status == 'rejected' %}bg-danger
+                            {% endif %}">
+                            {{ request.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if request.damage_level %}
+                        {{ request.damage_level }}%
+                        {% else %}
+                        <span class="text-muted">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if request.scrap_price %}
+                        ₹{{ request.scrap_price }}
+                        {% else %}
+                        <span class="text-muted">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ request.submitted_at|date:"M d, Y H:i" }}</td>
+                    <td>
+                        {% if request.vehicle.image %}
+                        <a href="{{ request.vehicle.image.url }}" target="_blank"
+                            class="btn btn-sm btn-outline-primary">View Image</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center">
+                        No requests found. <a href="{% url 'submit_vehicle' %}">Submit your first vehicle</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'user_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

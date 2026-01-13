@@ -1,31 +1,42 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">Sign In</h4>
+<div class="container d-flex align-items-center justify-content-center" style="min-height: 80vh;">
+    <div class="col-md-5 col-lg-4">
+        <div class="card border-0 shadow-lg bg-white">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <i class="fa-solid fa-recycle text-primary fa-3x mb-3"></i>
+                    <h2 class="fw-bold">Welcome Back</h2>
+                    <p class="text-muted">Sign in to continue to ScrapNet</p>
                 </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Username</label>
-                            <input type="text" name="username" id="username" class="form-control" placeholder="Enter your username" required>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="username" class="form-label text-muted small fw-bold">USERNAME</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0 text-muted"><i
+                                    class="fa-solid fa-user"></i></span>
+                            <input type="text" name="username" class="form-control border-start-0 ps-0" id="username"
+                                placeholder="Enter your username" required>
                         </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" name="password" id="password" class="form-control" placeholder="Enter your password" required>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">Sign In</button>
-                        </div>
-                    </form>
-                    <div class="text-center mt-3">
-                        <p>Don't have an account? <a href="{% url 'register' %}">Create one</a></p>
                     </div>
+                    <div class="mb-4">
+                        <label for="password" class="form-label text-muted small fw-bold">PASSWORD</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0 text-muted"><i
+                                    class="fa-solid fa-lock"></i></span>
+                            <input type="password" name="password" class="form-control border-start-0 ps-0"
+                                id="password" placeholder="••••••••" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2 rounded-pill fw-bold">Sign In</button>
+                </form>
+
+                <div class="text-center mt-4">
+                    <p class="small text-muted">Don't have an account? <a href="{% url 'register' %}"
+                            class="text-decoration-none fw-bold text-primary-light">Create Account</a></p>
                 </div>
             </div>
         </div>

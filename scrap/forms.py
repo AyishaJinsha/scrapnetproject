@@ -12,3 +12,21 @@ class VehicleForm(forms.ModelForm):
             'mileage': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'image': forms.FileInput(attrs={'class': 'form-control'}),
         }
+
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
+
+class CustomUserCreationForm(UserCreationForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'email', 'username']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['first_name'].widget.attrs.update({'placeholder': 'Full Name'})
+        self.fields['first_name'].label = "Full Name"
+        self.fields['email'].widget.attrs.update({'placeholder': 'example@email.com'})
+        self.fields['username'].widget.attrs.update({'placeholder': 'Choose a username'})
+        
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({'class': 'form-control'})

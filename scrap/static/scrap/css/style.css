@@ -1,107 +1,301 @@
 /* Custom styles for ScrapNet */
+:root {
+    /* Primary Brand Colors */
+    --primary: #2563EB;
+    /* Royal Blue */
+    --primary-dark: #1E40AF;
+    --primary-light: #60A5FA;
+
+    /* Secondary/Accent */
+    --secondary: #10B981;
+    /* Emerald */
+
+    /* Light Theme Base */
+    --bg-body: #F8FAFC;
+    /* Light Slate / White */
+    --bg-surface: #FFFFFF;
+    /* Pure White */
+    --bg-surface-lighter: #F1F5F9;
+    /* Input background */
+
+    /* Sidebar (Keep Dark) */
+    --sidebar-bg: #1E293B;
+    /* Slate 800 */
+
+    /* Text Colors (Dark on Light) */
+    --text-main: #0F172A;
+    /* Slate 900 */
+    --text-muted: #64748B;
+    /* Slate 500 */
+    --text-on-dark: #F8FAFC;
+    /* For sidebar/buttons */
+
+    /* Borders & Lines */
+    --border-color: #E2E8F0;
+    /* Light Gray */
+
+    /* Spacing & Radius */
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+
+    /* Shadows - softer for light theme */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+    --shadow-glow: 0 0 15px rgba(37, 99, 235, 0.1);
+}
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f8f9fa;
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg-body);
+    color: var(--text-main);
+    line-height: 1.6;
+    overflow-x: hidden;
 }
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    color: var(--text-main);
+}
+
+a {
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+/* --- Layout & Sidebar --- */
 
 .sidebar {
     position: fixed;
     top: 0;
     left: 0;
     height: 100vh;
-    width: 250px;
-    background-color: #343a40;
-    color: white;
-    padding-top: 60px;
-    z-index: 1000;
+    width: 260px;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    padding-top: 30px;
+    /* Reduced from 80px to remove gap */
+    z-index: 1001;
+    /* Above navbar */
 }
 
 .sidebar .nav-link {
-    color: rgba(255, 255, 255, 0.8);
-    padding: 10px 20px;
-    border-radius: 5px;
-    margin: 5px 10px;
+    color: var(--text-muted);
+    /* This needs to be checked, might need to be specific for sidebar */
+    color: #94a3b8;
+    /* Hardcoded slate-400 for sidebar text validity */
+    padding: 0.8rem 1.5rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-left: 3px solid transparent;
 }
 
-.sidebar .nav-link:hover {
-    color: white;
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
+.sidebar .nav-link:hover,
 .sidebar .nav-link.active {
-    background-color: #007bff;
-    color: white;
+    color: var(--primary-light);
+    background-color: rgba(79, 70, 229, 0.05);
+    border-left-color: var(--primary);
+}
+
+.sidebar .nav-link i {
+    width: 20px;
+    text-align: center;
 }
 
 .main-content {
-    margin-left: 250px;
-    padding: 20px;
+    margin-left: 0;
+    padding: 2.5rem;
+    padding-top: 80px;
+    /* Standard navbar clearance */
+    min-height: 100vh;
+    transition: margin-left 0.3s ease;
 }
 
+body.with-sidebar .main-content {
+    margin-left: 260px;
+    padding-top: calc(80px + 2rem);
+}
+
+/* --- Navbar --- */
+/* --- Navbar --- */
+.navbar {
+    background-color: #FFFFFF !important;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    height: 64px;
+    /* Slightly shorter for tighter feel */
+    margin-left: 0;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+body.with-sidebar .navbar {
+    margin-left: 260px;
+    width: calc(100% - 260px);
+    /* Fill remaining width */
+    z-index: 1000;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--primary) !important;
+    letter-spacing: -0.025em;
+    display: none;
+    /* Hide brand in navbar on desktop as it's in sidebar usually, or keep if preferred. Let's keep distinct */
+}
+
+/* Show brand only on mobile or if needed */
+@media (max-width: 768px) {
+    .navbar {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .navbar-brand {
+        display: block;
+    }
+}
+
+.navbar-text {
+    color: var(--text-muted) !important;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* --- Cards --- */
 .card {
-    border: none;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .card:hover {
     transform: translateY(-2px);
+    box-shadow: var(--shadow-lg), var(--shadow-glow);
+    border-color: var(--primary-light);
 }
 
 .card-header {
-    background-color: #007bff;
-    color: white;
-    border-radius: 10px 10px 0 0 !important;
+    background-color: transparent;
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.25rem 1.5rem;
+    font-weight: 600;
+    font-size: 1.1rem;
 }
 
+.card-body {
+    padding: 1.5rem;
+}
+
+/* --- Tables --- */
 .table {
-    background-color: white;
-    border-radius: 10px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--text-main);
+    border-color: var(--border-color);
 }
 
 .table thead th {
-    background-color: #f8f9fa;
-    border-bottom: 2px solid #dee2e6;
+    background-color: var(--bg-surface-lighter);
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    border-bottom: none;
+    padding: 1rem;
+}
+
+.table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* --- Buttons --- */
+.btn {
+    padding: 0.6rem 1.25rem;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
 }
 
 .btn-primary {
-    background-color: #007bff;
-    border-color: #007bff;
-    border-radius: 5px;
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.4);
 }
 
 .btn-primary:hover {
-    background-color: #0056b3;
-    border-color: #0056b3;
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.5);
 }
 
-.form-control {
-    border-radius: 5px;
-    border: 1px solid #ced4da;
+.btn-outline-light {
+    border-color: var(--border-color);
+    color: var(--text-muted);
 }
 
-.form-control:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+.btn-outline-light:hover {
+    background-color: var(--bg-surface-lighter);
+    border-color: var(--text-muted);
+    color: var(--text-main);
 }
 
-.navbar {
-    background-color: #343a40 !important;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+/* --- Forms --- */
+.form-control,
+.form-select {
+    background-color: var(--bg-surface-lighter) !important;
+    border: 1px solid var(--border-color);
+    color: var(--text-main) !important;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
 }
 
+.form-control:focus,
+.form-select:focus {
+    background-color: var(--bg-surface);
+    border-color: var(--primary);
+    color: var(--text-main);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.form-control::placeholder {
+    color: #94a3b8;
+}
+
+/* --- Mobile Responsiveness --- */
 @media (max-width: 768px) {
     .sidebar {
         width: 100%;
         height: auto;
         position: relative;
         padding-top: 0;
+        background-color: var(--sidebar-bg);
     }
+
     .main-content {
         margin-left: 0;
+        padding: 1rem;
+    }
+
+    .navbar {
+        height: auto;
+        padding: 1rem;
     }
 }

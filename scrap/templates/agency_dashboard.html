@@ -54,7 +54,7 @@
                     <td>
                         <span class="badge 
                             {% if request.status == 'submitted' %}bg-warning
-                            {% elif request.status == 'reviewed' %}bg-info
+                            {% elif request.status == 'under_agency_review' %}bg-info
                             {% endif %}">
                             {{ request.get_status_display }}
                         </span>
@@ -62,12 +62,15 @@
                     <td>{{ request.submitted_at|date:"M d, Y H:i" }}</td>
                     <td>
                         {% if request.status == 'submitted' %}
-                            <a href="{% url 'review_request' request.id %}" class="btn btn-sm btn-primary">Review</a>
-                        {% elif request.status == 'reviewed' %}
-                            <a href="{% url 'forward_request' request.id %}" class="btn btn-sm btn-success">Forward to RTO</a>
+                        <a href="{% url 'review_request' request.id %}" class="btn btn-sm btn-primary">Review</a>
+                        {% elif request.status == 'under_agency_review' %}
+                        <a href="{% url 'review_request' request.id %}" class="btn btn-sm btn-info">Edit Review</a>
+                        <a href="{% url 'forward_request' request.id %}" class="btn btn-sm btn-success">Forward to
+                            RTO</a>
                         {% endif %}
                         {% if request.vehicle.image %}
-                            <a href="{{ request.vehicle.image.url }}" target="_blank" class="btn btn-sm btn-outline-primary ms-1">View Image</a>
+                        <a href="{{ request.vehicle.image.url }}" target="_blank"
+                            class="btn btn-sm btn-outline-primary ms-1">View Image</a>
                         {% endif %}
                     </td>
                 </tr>

@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from .models import Profile, Vehicle, ScrapRequest
+from .models import Profile, Vehicle, ScrapRequest, Notification, ActionLog
 from .forms import VehicleForm, CustomUserCreationForm
 
 def home(request):
@@ -61,6 +61,7 @@ def user_dashboard(request):
     pending_requests = requests.filter(status='submitted').count()
     vehicles = Vehicle.objects.filter(scraprequest__user=request.user).distinct()
     total_vehicles = vehicles.count()
+    notifications = Notification.objects.filter(user=request.user, is_read=False).order_by('-created_at')
     return render(request, 'user_dashboard.html', {
         'requests': requests,
         'total_requests': total_requests,
@@ -68,6 +69,7 @@ def user_dashboard(request):
         'completed_requests': completed_requests,
         'pending_requests': pending_requests,
         'total_vehicles': total_vehicles,
+        'notifications': notifications,
     })
 
 @login_required
@@ -101,9 +103,9 @@ def agency_dashboard(request):
         return redirect('dashboard')
     all_requests = ScrapRequest.objects.all()
     pending_requests = all_requests.filter(status='submitted').count()
-    in_progress_requests = all_requests.filter(status__in=['reviewed', 'forwarded']).count()
+    in_progress_requests = all_requests.filter(status__in=['under_agency_review', 'forwarded']).count()
     completed_requests = all_requests.filter(status__in=['approved', 'rejected']).count()
-    requests = all_requests.filter(status__in=['submitted', 'reviewed'])
+    requests = all_requests.filter(status__in=['submitted', 'under_agency_review'])
     return render(request, 'agency_dashboard.html', {
         'requests': requests,
         'pending_requests': pending_requests,
@@ -122,9 +124,17 @@ def review_request(request, request_id):
         scrap_price = request.POST.get('scrap_price')
         scrap_request.damage_level = damage_level
         scrap_request.scrap_price = scrap_price
-        scrap_request.status = 'reviewed'
-        scrap_request.reviewed_at = timezone.now()
+        scrap_request.status = 'under_agency_review'
+        # scrap_request.reviewed_at = timezone.now() # This might be redundant if we use ActionLog timestamps, but keeping for now
         scrap_request.save()
+        
+        ActionLog.objects.create(
+            scrap_request=scrap_request,
+            user=request.user,
+            action='Agency Review',
+            details=f"Damage Level: {damage_level}, Scrap Price: {scrap_price}"
+        )
+        messages.success(request, 'Review details saved. You can now forward it to RTO.')
         return redirect('agency_dashboard')
     return render(request, 'review_request.html', {'scrap_request': scrap_request})
 
@@ -133,10 +143,29 @@ def forward_request(request, request_id):
     profile = get_object_or_404(Profile, user=request.user)
     if profile.role != 'agency':
         return redirect('dashboard')
-    scrap_request = get_object_or_404(ScrapRequest, id=request_id, status='reviewed')
+    scrap_request = get_object_or_404(ScrapRequest, id=request_id, status='under_agency_review')
+    
+    if not scrap_request.damage_level or not scrap_request.scrap_price:
+        messages.error(request, 'Please complete the review details before forwarding.')
+        return redirect('review_request', request_id=scrap_request.id)
+
     scrap_request.status = 'forwarded'
     scrap_request.forwarded_at = timezone.now()
     scrap_request.save()
+
+    ActionLog.objects.create(
+        scrap_request=scrap_request,
+        user=request.user,
+        action='Forwarded to RTO',
+        details="Request forwarded for final approval."
+    )
+
+    Notification.objects.create(
+        user=scrap_request.user,
+        message=f"Your scrap request for {scrap_request.vehicle.registration_number} has been forwarded to RTO."
+    )
+
+    messages.success(request, 'Request forwarded to RTO successfully.')
     return redirect('agency_dashboard')
 
 @login_required
@@ -144,8 +173,11 @@ def rto_dashboard(request):
     profile = get_object_or_404(Profile, user=request.user)
     if profile.role != 'rto':
         return redirect('dashboard')
-    requests = ScrapRequest.objects.filter(status='forwarded')
+    
+    # Prefetch logs and vehicle data
+    requests = ScrapRequest.objects.filter(status='forwarded').select_related('vehicle', 'user').prefetch_related('logs__user')
     awaiting_requests = requests.count()
+    
     return render(request, 'rto_dashboard.html', {
         'requests': requests,
         'awaiting_requests': awaiting_requests,
@@ -162,8 +194,35 @@ def approve_request(request, request_id):
         if action == 'approve':
             scrap_request.status = 'approved'
             scrap_request.approved_at = timezone.now()
+            ActionLog.objects.create(
+                scrap_request=scrap_request,
+                user=request.user,
+                action='Approved by RTO',
+                details="Registration cancelled and scrap approved."
+            )
+            Notification.objects.create(
+                user=scrap_request.user,
+                message=f"Congratulations! Your scrap request for {scrap_request.vehicle.registration_number} has been APPROVED by RTO."
+            )
         elif action == 'reject':
             scrap_request.status = 'rejected'
+            ActionLog.objects.create(
+                scrap_request=scrap_request,
+                user=request.user,
+                action='Rejected by RTO',
+                details="Request rejected by RTO."
+            )
+            Notification.objects.create(
+                user=scrap_request.user,
+                message=f"Your scrap request for {scrap_request.vehicle.registration_number} has been REJECTED by RTO."
+            )
         scrap_request.save()
         return redirect('rto_dashboard')
     return render(request, 'approve_request.html', {'scrap_request': scrap_request})
+
+@login_required
+def mark_notification_read(request, notification_id):
+    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+    notification.is_read = True
+    notification.save()
+    return redirect('user_dashboard')

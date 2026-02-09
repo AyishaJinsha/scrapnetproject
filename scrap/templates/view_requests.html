@@ -30,7 +30,7 @@
                     <td>
                         <span class="badge 
                             {% if request.status == 'submitted' %}bg-warning
-                            {% elif request.status == 'reviewed' %}bg-info
+                            {% elif request.status == 'under_agency_review' %}bg-info
                             {% elif request.status == 'forwarded' %}bg-primary
                             {% elif request.status == 'approved' %}bg-success
                             {% elif request.status == 'rejected' %}bg-danger
@@ -40,7 +40,7 @@
                     </td>
                     <td>
                         {% if request.damage_level %}
-                        {{ request.damage_level }}%
+                        {{ request.damage_level }}
                         {% else %}
                         <span class="text-muted">Pending</span>
                         {% endif %}

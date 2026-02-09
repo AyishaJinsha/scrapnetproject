@@ -24,22 +24,56 @@
                             <p><strong>Scrap Price:</strong> ${{ scrap_request.scrap_price }}</p>
                             <p><strong>Reviewed At:</strong> {{ scrap_request.reviewed_at|date:"M d, Y H:i" }}</p>
                             {% if scrap_request.vehicle.image %}
-                                <h6>Vehicle Image</h6>
-                                <img src="{{ scrap_request.vehicle.image.url }}" alt="Vehicle Image" class="img-fluid rounded" style="max-height: 200px;">
+                            <h6>Vehicle Image</h6>
+                            <img src="{{ scrap_request.vehicle.image.url }}" alt="Vehicle Image"
+                                class="img-fluid rounded" style="max-height: 200px;">
                             {% endif %}
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="mb-4">
+                        <h5>Audit Trail (Action Logs)</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Action</th>
+                                        <th>User</th>
+                                        <th>Timestamp</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in scrap_request.logs.all %}
+                                    <tr>
+                                        <td>{{ log.action }}</td>
+                                        <td>{{ log.user.username }}</td>
+                                        <td>{{ log.timestamp|date:"M d, Y H:i" }}</td>
+                                        <td>{{ log.details }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">No logs available.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     <hr>
                     <form method="post">
                         {% csrf_token %}
                         <div class="alert alert-info">
-                            <strong>Decision:</strong> Please review the vehicle details and agency assessment before making a decision.
+                            <strong>Decision:</strong> Please review the vehicle details and agency assessment before
+                            making a decision.
                         </div>
                         <div class="d-flex justify-content-between">
                             <a href="{% url 'rto_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
                             <div>
-                                <button type="submit" name="action" value="reject" class="btn btn-danger me-2">Reject Request</button>
-                                <button type="submit" name="action" value="approve" class="btn btn-success">Approve Request</button>
+                                <button type="submit" name="action" value="reject" class="btn btn-danger me-2">Reject
+                                    Request</button>
+                                <button type="submit" name="action" value="approve" class="btn btn-success">Approve
+                                    Request</button>
                             </div>
                         </div>
                     </form>

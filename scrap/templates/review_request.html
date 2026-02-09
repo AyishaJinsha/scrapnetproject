@@ -21,10 +21,11 @@
                         </div>
                         <div class="col-md-6">
                             {% if scrap_request.vehicle.image %}
-                                <h5>Vehicle Image</h5>
-                                <img src="{{ scrap_request.vehicle.image.url }}" alt="Vehicle Image" class="img-fluid rounded">
+                            <h5>Vehicle Image</h5>
+                            <img src="{{ scrap_request.vehicle.image.url }}" alt="Vehicle Image"
+                                class="img-fluid rounded">
                             {% else %}
-                                <p>No image uploaded</p>
+                            <p>No image uploaded</p>
                             {% endif %}
                         </div>
                     </div>
@@ -36,15 +37,21 @@
                                 <label for="damage_level" class="form-label">Damage Level</label>
                                 <select name="damage_level" id="damage_level" class="form-select" required>
                                     <option value="">Select damage level</option>
-                                    <option value="Minor">Minor</option>
-                                    <option value="Moderate">Moderate</option>
-                                    <option value="Severe">Severe</option>
-                                    <option value="Total Loss">Total Loss</option>
+                                    <option value="Minor" {% if scrap_request.damage_level=='Minor' %}selected{% endif
+                                        %}>Minor</option>
+                                    <option value="Moderate" {% if scrap_request.damage_level=='Moderate' %}selected{%
+                                        endif %}>Moderate</option>
+                                    <option value="Severe" {% if scrap_request.damage_level=='Severe' %}selected{% endif
+                                        %}>Severe</option>
+                                    <option value="Total Loss" {% if scrap_request.damage_level=='Total Loss'
+                                        %}selected{% endif %}>Total Loss</option>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="scrap_price" class="form-label">Scrap Price ($)</label>
-                                <input type="number" step="0.01" name="scrap_price" id="scrap_price" class="form-control" placeholder="Enter scrap price" required>
+                                <input type="number" step="0.01" name="scrap_price" id="scrap_price"
+                                    class="form-control" placeholder="Enter scrap price"
+                                    value="{{ scrap_request.scrap_price }}" required>
                             </div>
                         </div>
                         <div class="d-flex justify-content-between">

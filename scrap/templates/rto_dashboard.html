@@ -36,13 +36,19 @@
                     <td>{{ request.vehicle.registration_number }}</td>
                     <td>{{ request.user.username }}</td>
                     <td>Agency Review</td>
+                    <td>
+                        {% with review_log=request.logs.filter.action=='Agency Review'|first %}
+                        {{ review_log.user.username|default:"Pending" }}
+                        {% endwith %}
+                    </td>
                     <td>{{ request.damage_level }}</td>
                     <td>${{ request.scrap_price }}</td>
                     <td>{{ request.forwarded_at|date:"M d, Y H:i" }}</td>
                     <td>
                         <a href="{% url 'approve_request' request.id %}" class="btn btn-sm btn-primary">Review</a>
                         {% if request.vehicle.image %}
-                            <a href="{{ request.vehicle.image.url }}" target="_blank" class="btn btn-sm btn-outline-primary ms-1">View Image</a>
+                        <a href="{{ request.vehicle.image.url }}" target="_blank"
+                            class="btn btn-sm btn-outline-primary ms-1">View Image</a>
                         {% endif %}
                     </td>
                 </tr>

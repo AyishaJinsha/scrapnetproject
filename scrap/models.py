@@ -33,6 +33,8 @@ class ScrapRequest(models.Model):
     ]
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='scrap_requests')
     vehicle = models.OneToOneField(Vehicle, on_delete=models.CASCADE)
+    agency = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='agency_requests')
+    rto_officer = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='rto_requests')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted')
     damage_level = models.CharField(max_length=50, blank=True, null=True)
     scrap_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)

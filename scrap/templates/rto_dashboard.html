@@ -1,64 +1,183 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container-fluid">
-    <h1 class="mb-4">RTO Officer Dashboard</h1>
-
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card text-white bg-primary">
-                <div class="card-body">
-                    <h5 class="card-title">{{ awaiting_requests }}</h5>
-                    <p class="card-text">Requests Awaiting Verification</p>
+<main class="main-content">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header mb-4">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h1 class="page-title">RTO Officer Dashboard</h1>
+                    <p class="text-muted">Verify and approve vehicle scrapping requests</p>
                 </div>
             </div>
         </div>
-    </div>
 
-    <h3>Requests for Approval</h3>
+        <!-- Statistics Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-primary">
+                        <i class="fa-solid fa-inbox"></i>
+                    </div>
+                    <div>
+                        <p class="stat-label">Awaiting Approval</p>
+                        <h4 class="stat-value">{{ awaiting_requests }}</h4>
+                    </div>
+                </div>
+            </div>
 
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Vehicle Registration</th>
-                    <th>Owner</th>
-                    <th>Agency</th>
-                    <th>Damage Level</th>
-                    <th>Scrap Price</th>
-                    <th>Forwarded At</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for request in requests %}
-                <tr>
-                    <td>{{ request.vehicle.registration_number }}</td>
-                    <td>{{ request.user.username }}</td>
-                    <td>Agency Review</td>
-                    <td>
-                        {% with review_log=request.logs.filter.action=='Agency Review'|first %}
-                        {{ review_log.user.username|default:"Pending" }}
-                        {% endwith %}
-                    </td>
-                    <td>{{ request.damage_level }}</td>
-                    <td>${{ request.scrap_price }}</td>
-                    <td>{{ request.forwarded_at|date:"M d, Y H:i" }}</td>
-                    <td>
-                        <a href="{% url 'approve_request' request.id %}" class="btn btn-sm btn-primary">Review</a>
-                        {% if request.vehicle.image %}
-                        <a href="{{ request.vehicle.image.url }}" target="_blank"
-                            class="btn btn-sm btn-outline-primary ms-1">View Image</a>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="7" class="text-center">No requests awaiting approval.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+            <div class="col-lg-4 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success">
+                        <i class="fa-solid fa-check-circle"></i>
+                    </div>
+                    <div>
+                        <p class="stat-label">Approved</p>
+                        <h4 class="stat-value">{{ approved_count }}</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-danger">
+                        <i class="fa-solid fa-times-circle"></i>
+                    </div>
+                    <div>
+                        <p class="stat-label">Rejected</p>
+                        <h4 class="stat-value">{{ rejected_count }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Requests Table -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-list text-primary"></i> Requests for Approval</h5>
+            </div>
+
+            {% if requests %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Vehicle Registration</th>
+                            <th>Owner Name</th>
+                            <th>Scrap Dealer</th>
+                            <th>Damage Level</th>
+                            <th>Scrap Value</th>
+                            <th>Forwarded</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in requests %}
+                        <tr>
+                            <td>
+                                <span class="fw-bold text-uppercase">{{ request.vehicle.registration_number }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ request.user.first_name }} {{ request.user.last_name }}</strong><br>
+                                <small class="text-muted">{{ request.user.email }}</small>
+                            </td>
+                            <td>
+                                {% if request.agency %}
+                                <strong>{{ request.agency.first_name }} {{ request.agency.last_name }}</strong><br>
+                                <small class="text-muted">{{ request.agency.email }}</small>
+                                {% else %}
+                                <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ request.damage_level }}</span>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-success">₹{{ request.scrap_price }}</span>
+                            </td>
+                            <td><small>{{ request.forwarded_at|date:"d M Y" }}</small></td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'approve_request' request.id %}" 
+                                        class="btn btn-primary" title="Review & Approve">
+                                        <i class="fa-solid fa-check"></i> Review
+                                    </a>
+                                    {% if request.vehicle.image %}
+                                    <a href="{{ request.vehicle.image.url }}" target="_blank"
+                                        class="btn btn-outline-secondary" title="View Vehicle Image">
+                                        <i class="fa-solid fa-image"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="card-body text-center py-5">
+                <i class="fa-solid fa-inbox text-muted" style="font-size: 3rem;"></i>
+                <h5 class="mt-3">No Requests Awaiting Approval</h5>
+                <p class="text-muted">All requests have been processed</p>
+            </div>
+            {% endif %}
+        </div>
     </div>
-</div>
+</main>
+
+<style>
+.stat-card {
+    background: white;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    transition: box-shadow 0.3s ease;
+}
+
+.stat-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #212529;
+    margin: 0;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #212529;
+    margin: 0;
+}
+
+.page-header {
+    padding: 1.5rem 0;
+}
+</style>
 {% endblock %}

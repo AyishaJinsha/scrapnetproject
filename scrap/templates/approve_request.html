@@ -1,83 +1,206 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">Review Request - {{ scrap_request.vehicle.registration_number }}</h4>
+<main class="main-content">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header mb-4">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h1 class="page-title">RTO Decision Form</h1>
+                    <p class="text-muted">Vehicle: {{ scrap_request.vehicle.registration_number }}</p>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h5>Vehicle Details</h5>
-                            <p><strong>Registration:</strong> {{ scrap_request.vehicle.registration_number }}</p>
-                            <p><strong>Type:</strong> {{ scrap_request.vehicle.vehicle_type }}</p>
-                            <p><strong>Age:</strong> {{ scrap_request.vehicle.age }} years</p>
-                            <p><strong>Mileage:</strong> {{ scrap_request.vehicle.mileage }} km</p>
-                            <p><strong>Owner:</strong> {{ scrap_request.user.username }}</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h5>Agency Assessment</h5>
-                            <p><strong>Damage Level:</strong> {{ scrap_request.damage_level }}</p>
-                            <p><strong>Scrap Price:</strong> ${{ scrap_request.scrap_price }}</p>
-                            <p><strong>Reviewed At:</strong> {{ scrap_request.reviewed_at|date:"M d, Y H:i" }}</p>
-                            {% if scrap_request.vehicle.image %}
-                            <h6>Vehicle Image</h6>
-                            <img src="{{ scrap_request.vehicle.image.url }}" alt="Vehicle Image"
-                                class="img-fluid rounded" style="max-height: 200px;">
-                            {% endif %}
+                <a href="{% url 'rto_dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Vehicle & Assessment Details -->
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="mb-0"><i class="fa-solid fa-car text-primary"></i> Vehicle Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="text-muted small">Registration Number</label>
+                                <h6 class="text-uppercase fw-bold">{{ scrap_request.vehicle.registration_number }}</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Vehicle Type</label>
+                                <p>{{ scrap_request.vehicle.vehicle_type }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Age</label>
+                                <p>{{ scrap_request.vehicle.age }} years</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Mileage</label>
+                                <p>{{ scrap_request.vehicle.mileage }} km</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Owner</label>
+                                <p><strong>{{ scrap_request.user.first_name }} {{ scrap_request.user.last_name }}</strong><br><small>{{ scrap_request.user.email }}</small></p>
+                            </div>
                         </div>
                     </div>
-                    <hr>
-                    <div class="mb-4">
-                        <h5>Audit Trail (Action Logs)</h5>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="mb-0"><i class="fa-solid fa-assessment text-primary"></i> Agency Assessment</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="text-muted small">Damage Level</label>
+                                <h6 class="fw-bold">{{ scrap_request.damage_level }}</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Estimated Value</label>
+                                <h6 class="fw-bold text-success">₹{{ scrap_request.scrap_price }}</h6>
+                            </div>
+                            <div class="col-12">
+                                <label class="text-muted small">Scrap Dealer</label>
+                                <p>{% if scrap_request.agency %}<strong>{{ scrap_request.agency.first_name }} {{ scrap_request.agency.last_name }}</strong><br><small>{{ scrap_request.agency.email }}</small>{% else %}Not assigned{% endif %}</p>
+                            </div>
+                            <div class="col-12">
+                                <label class="text-muted small">Assessment Date</label>
+                                <p>{{ scrap_request.reviewed_at|date:"d M Y, H:i" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit Trail & Decision -->
+            <div class="col-lg-6 mb-4">
+                <!-- Audit Trail -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="mb-0"><i class="fa-solid fa-history text-primary"></i> Audit Trail</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if scrap_request.logs.all %}
                         <div class="table-responsive">
-                            <table class="table table-sm table-bordered">
+                            <table class="table table-sm table-hover mb-0">
                                 <thead class="table-light">
                                     <tr>
                                         <th>Action</th>
-                                        <th>User</th>
-                                        <th>Timestamp</th>
-                                        <th>Details</th>
+                                        <th>By</th>
+                                        <th>Date</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for log in scrap_request.logs.all %}
+                                    {% for log in scrap_request.logs.all|dictsort:"timestamp" %}
                                     <tr>
-                                        <td>{{ log.action }}</td>
-                                        <td>{{ log.user.username }}</td>
-                                        <td>{{ log.timestamp|date:"M d, Y H:i" }}</td>
-                                        <td>{{ log.details }}</td>
-                                    </tr>
-                                    {% empty %}
-                                    <tr>
-                                        <td colspan="4" class="text-center text-muted">No logs available.</td>
+                                        <td><small><strong>{{ log.action }}</strong></small></td>
+                                        <td><small>{{ log.user.first_name|default:log.user.username }}</small></td>
+                                        <td><small>{{ log.timestamp|date:"d M, H:i" }}</small></td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                    <hr>
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="alert alert-info">
-                            <strong>Decision:</strong> Please review the vehicle details and agency assessment before
-                            making a decision.
+                        {% else %}
+                        <div class="p-3 text-center text-muted">
+                            <small>No activity logs available</small>
                         </div>
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'rto_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
-                            <div>
-                                <button type="submit" name="action" value="reject" class="btn btn-danger me-2">Reject
-                                    Request</button>
-                                <button type="submit" name="action" value="approve" class="btn btn-success">Approve
-                                    Request</button>
-                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Vehicle Image -->
+                {% if scrap_request.vehicle.image %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="mb-0"><i class="fa-solid fa-image text-primary"></i> Vehicle Image</h5>
+                    </div>
+                    <div class="card-body">
+                        <img src="{{ scrap_request.vehicle.image.url }}" alt="Vehicle Image" 
+                            class="img-fluid rounded" style="max-height: 300px; width: 100%; object-fit: cover;">
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- RTO Decision Form -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="mb-0"><i class="fa-solid fa-gavel text-primary"></i> RTO Decision</h5>
+                    </div>
+                    <form method="post" class="card-body">
+                        {% csrf_token %}
+                        
+                        <div class="alert alert-info mb-3">
+                            <i class="fa-solid fa-info-circle"></i> Review all details carefully before making your decision.
+                        </div>
+
+                        <!-- Rejection Reason (Hidden initially, shown on reject) -->
+                        <div id="rejection-reason-group" class="mb-3" style="display: none;">
+                            <label class="form-label">Rejection Reason *</label>
+                            <textarea class="form-control" name="rejection_reason" rows="3" 
+                                placeholder="Provide the reason for rejection..."></textarea>
+                            <small class="text-muted">This message will be sent to the vehicle owner.</small>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" name="action" value="approve" class="btn btn-success btn-lg">
+                                <i class="fa-solid fa-check-circle"></i> Approve Request
+                            </button>
+                            <button type="button" class="btn btn-danger btn-lg" id="reject-btn">
+                                <i class="fa-solid fa-times-circle"></i> Reject Request
+                            </button>
+                            <a href="{% url 'rto_dashboard' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+
+                        <!-- Hidden reject button that shows when user clicks reject -->
+                        <div id="reject-confirm-group" style="display: none;" class="mt-3">
+                            <button type="submit" name="action" value="reject" class="btn btn-danger w-100">
+                                Confirm Rejection
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary w-100 mt-2" id="cancel-reject">
+                                Cancel
+                            </button>
                         </div>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+document.getElementById('reject-btn').addEventListener('click', function() {
+    document.getElementById('rejection-reason-group').style.display = 'block';
+    document.querySelector('.btn-group').style.display = 'none';
+    document.getElementById('reject-confirm-group').style.display = 'block';
+    this.style.display = 'none';
+});
+
+document.getElementById('cancel-reject').addEventListener('click', function() {
+    document.getElementById('rejection-reason-group').style.display = 'none';
+    document.getElementById('reject-confirm-group').style.display = 'none';
+    document.querySelector('.btn-group').style.display = 'flex';
+    document.getElementById('reject-btn').style.display = 'block';
+});
+</script>
+
+<style>
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #212529;
+    margin: 0;
+}
+
+.page-header {
+    padding: 1.5rem 0;
+}
+</style>
+{% endblock %}
             </div>
         </div>
     </div>

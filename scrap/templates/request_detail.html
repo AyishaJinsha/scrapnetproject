@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block content %}
+<main class="main-content">
+    <div class="container-fluid">
+        <!-- Page Header -->
+        <div class="page-header mb-4">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h1 class="page-title">Request Details</h1>
+                    <p class="text-muted">Scrap Request ID: #{{ scrap_request.id }}</p>
+                </div>
+                <a href="{% if user.profile.role == 'user' %}{% url 'user_dashboard' %}{% endif %}" class="btn btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Vehicle Details Card -->
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="mb-0"><i class="fa-solid fa-car text-primary"></i> Vehicle Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="text-muted small">Registration Number</label>
+                                <h6 class="text-uppercase fw-bold">{{ scrap_request.vehicle.registration_number }}</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Vehicle Type</label>
+                                <p>{{ scrap_request.vehicle.vehicle_type }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Age</label>
+                                <p>{{ scrap_request.vehicle.age }} years</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Mileage</label>
+                                <p>{{ scrap_request.vehicle.mileage }} km</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Submitted Date</label>
+                                <p>{{ scrap_request.submitted_at|date:"d M Y, H:i" }}</p>
+                            </div>
+                        </div>
+
+                        {% if scrap_request.vehicle.image %}
+                        <div class="mt-4">
+                            <label class="text-muted small">Vehicle Image</label>
+                            <img src="{{ scrap_request.vehicle.image.url }}" alt="Vehicle Image" class="img-fluid rounded" style="max-height: 300px; object-fit: cover;">
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Request Status & Assessment -->
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="mb-0"><i class="fa-solid fa-file-alt text-primary"></i> Request Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="text-muted small">Current Status</label>
+                                <div>
+                                    {% if scrap_request.status == 'submitted' %}
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fa-solid fa-hourglass-start"></i> Submitted
+                                    </span>
+                                    {% elif scrap_request.status == 'under_agency_review' %}
+                                    <span class="badge bg-info">
+                                        <i class="fa-solid fa-magnifying-glass"></i> Under Agency Review
+                                    </span>
+                                    {% elif scrap_request.status == 'forwarded' %}
+                                    <span class="badge bg-primary">
+                                        <i class="fa-solid fa-arrow-right"></i> Forwarded to RTO
+                                    </span>
+                                    {% elif scrap_request.status == 'approved' %}
+                                    <span class="badge bg-success">
+                                        <i class="fa-solid fa-check-circle"></i> Approved
+                                    </span>
+                                    {% elif scrap_request.status == 'rejected' %}
+                                    <span class="badge bg-danger">
+                                        <i class="fa-solid fa-times-circle"></i> Rejected
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scrap Assessment Card -->
+                {% if scrap_request.damage_level and scrap_request.scrap_price %}
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-light border-bottom">
+                        <h5 class="mb-0"><i class="fa-solid fa-assessment text-primary"></i> Scrap Assessment</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="text-muted small">Damage Level</label>
+                                <h6 class="fw-bold">{{ scrap_request.damage_level }}</h6>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Estimated Scrap Value</label>
+                                <h6 class="fw-bold text-success">₹{{ scrap_request.scrap_price }}</h6>
+                            </div>
+                            {% if scrap_request.agency %}
+                            <div class="col-12">
+                                <label class="text-muted small">Assessed By (Scrap Dealer)</label>
+                                <p>{{ scrap_request.agency.first_name }} {{ scrap_request.agency.last_name }}<br><small class="text-muted">{{ scrap_request.agency.email }}</small></p>
+                            </div>
+                            {% endif %}
+                            {% if scrap_request.reviewed_at %}
+                            <div class="col-12">
+                                <label class="text-muted small">Assessment Date</label>
+                                <p>{{ scrap_request.reviewed_at|date:"d M Y, H:i" }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-timeline text-primary"></i> Request Timeline</h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    {% if scrap_request.submitted_at %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-warning text-white">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">Request Submitted</h6>
+                            <p class="text-muted small mb-0">{{ scrap_request.submitted_at|date:"d M Y at H:i" }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if scrap_request.reviewed_at %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-info text-white">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">Reviewed by Scrap Dealer</h6>
+                            <p class="text-muted small mb-0">{{ scrap_request.reviewed_at|date:"d M Y at H:i" }}</p>
+                            <p class="mb-0"><small><strong>Damage:</strong> {{ scrap_request.damage_level }}, <strong>Price:</strong> ₹{{ scrap_request.scrap_price }}</small></p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if scrap_request.forwarded_at %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-primary text-white">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">Forwarded to RTO</h6>
+                            <p class="text-muted small mb-0">{{ scrap_request.forwarded_at|date:"d M Y at H:i" }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if scrap_request.approved_at %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-success text-white">
+                            <i class="fa-solid fa-check-circle"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">Approved by RTO</h6>
+                            <p class="text-muted small mb-0">{{ scrap_request.approved_at|date:"d M Y at H:i" }}</p>
+                            {% if scrap_request.rto_officer %}
+                            <p class="mb-0"><small><strong>Approved by:</strong> {{ scrap_request.rto_officer.first_name }} {{ scrap_request.rto_officer.last_name }}</small></p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if scrap_request.status == 'rejected' %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-danger text-white">
+                            <i class="fa-solid fa-times-circle"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="mb-1">Rejected</h6>
+                            <p class="text-muted small mb-0">Request rejected by RTO</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Logs -->
+        {% if scrap_request.logs.all %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-bottom">
+                <h5 class="mb-0"><i class="fa-solid fa-history text-primary"></i> Activity Log</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Action</th>
+                            <th>Performed By</th>
+                            <th>Date & Time</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in scrap_request.logs.all|dictsort:"timestamp" %}
+                        <tr>
+                            <td>
+                                <strong>{{ log.action }}</strong>
+                            </td>
+                            <td>{{ log.user.first_name }} {{ log.user.last_name }}</td>
+                            <td>{{ log.timestamp|date:"d M Y, H:i" }}</td>
+                            <td><small>{{ log.details|truncatewords:20 }}</small></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Certificate Download Section -->
+        {% if scrap_request.status == 'approved' %}
+        <div class="alert alert-success alert-dismissible fade show mt-4" role="alert">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <i class="fa-solid fa-certificate text-success" style="font-size: 2rem;"></i>
+                </div>
+                <div class="col">
+                    <h5 class="mb-1">Digital Certificate Available</h5>
+                    <p class="mb-0">Your vehicle has been approved for scrapping. Download your digital scrap certificate.</p>
+                </div>
+                <div class="col-auto">
+                    <a href="{% url 'download_certificate' scrap_request.id %}" class="btn btn-success">
+                        <i class="fa-solid fa-download"></i> Download Certificate
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</main>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 2.5rem;
+    padding-bottom: 2rem;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -0.75rem;
+    top: 2.5rem;
+    bottom: -2rem;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item:last-child::before {
+    display: none;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -1.25rem;
+    top: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.timeline-content {
+    padding-left: 1rem;
+}
+</style>
+{% endblock %}

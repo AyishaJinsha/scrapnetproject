@@ -54,20 +54,22 @@ def user_dashboard(request):
     profile = get_object_or_404(Profile, user=request.user)
     if profile.role != 'user':
         return redirect('dashboard')
-    requests = ScrapRequest.objects.filter(user=request.user)
+    requests = ScrapRequest.objects.filter(user=request.user).select_related('vehicle', 'agency')
     total_requests = requests.count()
-    active_requests = requests.filter(status__in=['submitted', 'reviewed', 'forwarded']).count()
+    active_requests = requests.filter(status__in=['submitted', 'under_agency_review', 'forwarded']).count()
     completed_requests = requests.filter(status__in=['approved', 'rejected']).count()
     pending_requests = requests.filter(status='submitted').count()
+    approved_requests = requests.filter(status='approved').count()
     vehicles = Vehicle.objects.filter(scraprequest__user=request.user).distinct()
     total_vehicles = vehicles.count()
-    notifications = Notification.objects.filter(user=request.user, is_read=False).order_by('-created_at')
+    notifications = Notification.objects.filter(user=request.user, is_read=False).order_by('-created_at')[:5]
     return render(request, 'user_dashboard.html', {
         'requests': requests,
         'total_requests': total_requests,
         'active_requests': active_requests,
         'completed_requests': completed_requests,
         'pending_requests': pending_requests,
+        'approved_requests': approved_requests,
         'total_vehicles': total_vehicles,
         'notifications': notifications,
     })
@@ -101,15 +103,22 @@ def agency_dashboard(request):
     profile = get_object_or_404(Profile, user=request.user)
     if profile.role != 'agency':
         return redirect('dashboard')
-    all_requests = ScrapRequest.objects.all()
+    all_requests = ScrapRequest.objects.filter(
+        status__in=['submitted', 'under_agency_review']
+    ).select_related('vehicle', 'user')
     pending_requests = all_requests.filter(status='submitted').count()
-    in_progress_requests = all_requests.filter(status__in=['under_agency_review', 'forwarded']).count()
-    completed_requests = all_requests.filter(status__in=['approved', 'rejected']).count()
-    requests = all_requests.filter(status__in=['submitted', 'under_agency_review'])
+    in_review_requests = all_requests.filter(status='under_agency_review').count()
+    forwarded_requests = ScrapRequest.objects.filter(status='forwarded', agency=request.user).count()
+    completed_requests = ScrapRequest.objects.filter(
+        agency=request.user,
+        status__in=['approved', 'rejected']
+    ).count()
+    requests = all_requests
     return render(request, 'agency_dashboard.html', {
         'requests': requests,
         'pending_requests': pending_requests,
-        'in_progress_requests': in_progress_requests,
+        'in_review_requests': in_review_requests,
+        'forwarded_requests': forwarded_requests,
         'completed_requests': completed_requests,
     })
 
@@ -118,22 +127,29 @@ def review_request(request, request_id):
     profile = get_object_or_404(Profile, user=request.user)
     if profile.role != 'agency':
         return redirect('dashboard')
-    scrap_request = get_object_or_404(ScrapRequest, id=request_id)
+    scrap_request = get_object_or_404(ScrapRequest, id=request_id, status='submitted')
     if request.method == 'POST':
         damage_level = request.POST.get('damage_level')
         scrap_price = request.POST.get('scrap_price')
         scrap_request.damage_level = damage_level
         scrap_request.scrap_price = scrap_price
         scrap_request.status = 'under_agency_review'
-        # scrap_request.reviewed_at = timezone.now() # This might be redundant if we use ActionLog timestamps, but keeping for now
+        scrap_request.agency = request.user
+        scrap_request.reviewed_at = timezone.now()
         scrap_request.save()
         
         ActionLog.objects.create(
             scrap_request=scrap_request,
             user=request.user,
             action='Agency Review',
-            details=f"Damage Level: {damage_level}, Scrap Price: {scrap_price}"
+            details=f"Damage Level: {damage_level}, Scrap Price: ₹{scrap_price}"
         )
+        
+        Notification.objects.create(
+            user=scrap_request.user,
+            message=f"Your vehicle {scrap_request.vehicle.registration_number} has been reviewed by the scrap dealer. Damage Level: {damage_level}, Estimated Price: ₹{scrap_price}"
+        )
+        
         messages.success(request, 'Review details saved. You can now forward it to RTO.')
         return redirect('agency_dashboard')
     return render(request, 'review_request.html', {'scrap_request': scrap_request})
@@ -157,12 +173,12 @@ def forward_request(request, request_id):
         scrap_request=scrap_request,
         user=request.user,
         action='Forwarded to RTO',
-        details="Request forwarded for final approval."
+        details=f"Request forwarded to RTO for final approval. Damage: {scrap_request.damage_level}, Price: ₹{scrap_request.scrap_price}"
     )
 
     Notification.objects.create(
         user=scrap_request.user,
-        message=f"Your scrap request for {scrap_request.vehicle.registration_number} has been forwarded to RTO."
+        message=f"Your scrap request for {scrap_request.vehicle.registration_number} has been forwarded to RTO for final approval."
     )
 
     messages.success(request, 'Request forwarded to RTO successfully.')
@@ -175,12 +191,19 @@ def rto_dashboard(request):
         return redirect('dashboard')
     
     # Prefetch logs and vehicle data
-    requests = ScrapRequest.objects.filter(status='forwarded').select_related('vehicle', 'user').prefetch_related('logs__user')
+    requests = ScrapRequest.objects.filter(status='forwarded').select_related(
+        'vehicle', 'user', 'agency'
+    ).prefetch_related('logs__user').order_by('-forwarded_at')
+    
     awaiting_requests = requests.count()
+    approved_count = ScrapRequest.objects.filter(status='approved', rto_officer=request.user).count()
+    rejected_count = ScrapRequest.objects.filter(status='rejected', rto_officer=request.user).count()
     
     return render(request, 'rto_dashboard.html', {
         'requests': requests,
         'awaiting_requests': awaiting_requests,
+        'approved_count': approved_count,
+        'rejected_count': rejected_count,
     })
 
 @login_required
@@ -188,33 +211,35 @@ def approve_request(request, request_id):
     profile = get_object_or_404(Profile, user=request.user)
     if profile.role != 'rto':
         return redirect('dashboard')
-    scrap_request = get_object_or_404(ScrapRequest, id=request_id)
+    scrap_request = get_object_or_404(ScrapRequest, id=request_id, status='forwarded')
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'approve':
             scrap_request.status = 'approved'
             scrap_request.approved_at = timezone.now()
+            scrap_request.rto_officer = request.user
             ActionLog.objects.create(
                 scrap_request=scrap_request,
                 user=request.user,
                 action='Approved by RTO',
-                details="Registration cancelled and scrap approved."
+                details="Vehicle registration cancelled and scrap approved. Digital certificate generated."
             )
             Notification.objects.create(
                 user=scrap_request.user,
-                message=f"Congratulations! Your scrap request for {scrap_request.vehicle.registration_number} has been APPROVED by RTO."
+                message=f"✅ Congratulations! Your scrap request for {scrap_request.vehicle.registration_number} has been APPROVED by RTO. Vehicle registration has been permanently cancelled."
             )
         elif action == 'reject':
             scrap_request.status = 'rejected'
+            scrap_request.rto_officer = request.user
             ActionLog.objects.create(
                 scrap_request=scrap_request,
                 user=request.user,
                 action='Rejected by RTO',
-                details="Request rejected by RTO."
+                details=f"Request rejected by RTO. Reason: {request.POST.get('rejection_reason', 'Not specified')}"
             )
             Notification.objects.create(
                 user=scrap_request.user,
-                message=f"Your scrap request for {scrap_request.vehicle.registration_number} has been REJECTED by RTO."
+                message=f"❌ Your scrap request for {scrap_request.vehicle.registration_number} has been REJECTED by RTO. Reason: {request.POST.get('rejection_reason', 'Please contact RTO for details')}"
             )
         scrap_request.save()
         return redirect('rto_dashboard')
@@ -226,3 +251,82 @@ def mark_notification_read(request, notification_id):
     notification.is_read = True
     notification.save()
     return redirect('user_dashboard')
+@login_required
+def view_request_detail(request, request_id):
+    """View detailed information about a specific scrap request"""
+    scrap_request = get_object_or_404(ScrapRequest, id=request_id)
+    profile = get_object_or_404(Profile, user=request.user)
+    
+    # Users can only view their own requests
+    if profile.role == 'user' and scrap_request.user != request.user:
+        messages.error(request, 'You do not have permission to view this request.')
+        return redirect('user_dashboard')
+    
+    return render(request, 'request_detail.html', {'scrap_request': scrap_request})
+
+@login_required
+def download_certificate(request, request_id):
+    """Generate and download digital scrap certificate"""
+    from django.http import HttpResponse
+    from datetime import datetime
+    
+    scrap_request = get_object_or_404(ScrapRequest, id=request_id, status='approved')
+    profile = get_object_or_404(Profile, user=request.user)
+    
+    # Only vehicle owner can download certificate
+    if scrap_request.user != request.user:
+        messages.error(request, 'You do not have permission to download this certificate.')
+        return redirect('user_dashboard')
+    
+    # Generate simple certificate content
+    certificate_content = f"""
+    ================================================================================
+                    SCRAPNET - DIGITAL SCRAP CERTIFICATE
+    ================================================================================
+    
+    Certificate ID: SCF-{scrap_request.id:05d}-{scrap_request.approved_at.strftime('%Y%m%d')}
+    
+    Vehicle Details:
+    ────────────────────────────────────────────────────────────────────────────
+    Registration Number: {scrap_request.vehicle.registration_number}
+    Vehicle Type: {scrap_request.vehicle.vehicle_type}
+    Age: {scrap_request.vehicle.age} years
+    Mileage: {scrap_request.vehicle.mileage} km
+    
+    Owner Details:
+    ────────────────────────────────────────────────────────────────────────────
+    Name: {scrap_request.user.first_name or scrap_request.user.username}
+    Username: {scrap_request.user.username}
+    Email: {scrap_request.user.email}
+    
+    Scrap Assessment:
+    ────────────────────────────────────────────────────────────────────────────
+    Damage Level: {scrap_request.damage_level}
+    Estimated Scrap Value: ₹{scrap_request.scrap_price}
+    Scrap Dealer: {scrap_request.agency.first_name or scrap_request.agency.username if scrap_request.agency else 'N/A'}
+    
+    Approval Information:
+    ────────────────────────────────────────────────────────────────────────────
+    Submitted Date: {scrap_request.submitted_at.strftime('%d-%m-%Y %H:%M:%S')}
+    Approved Date: {scrap_request.approved_at.strftime('%d-%m-%Y %H:%M:%S')}
+    Approved By (RTO): {scrap_request.rto_officer.first_name or scrap_request.rto_officer.username if scrap_request.rto_officer else 'RTO'}
+    
+    Status: VEHICLE DE-REGISTERED & APPROVED FOR SCRAPPING
+    ────────────────────────────────────────────────────────────────────────────
+    
+    This certificate confirms that the above vehicle has been permanently 
+    de-registered from the transport authority and is approved for scrapping.
+    
+    Generated on: {datetime.now().strftime('%d-%m-%Y %H:%M:%S')}
+    System: ScrapNet - Vehicle Scrapping Management System
+    
+    ================================================================================
+    This is an electronically generated certificate and is valid without signature.
+    ================================================================================
+    """
+    
+    response = HttpResponse(certificate_content, content_type='text/plain')
+    filename = f"Scrap_Certificate_{scrap_request.vehicle.registration_number}.txt"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response

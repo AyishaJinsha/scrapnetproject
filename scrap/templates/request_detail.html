@@ -1,189 +1,193 @@
 {% extends "base.html" %}
 
 {% block content %}
-<main class="main-content">
+<div class="detail-wrapper">
     <div class="container-fluid">
-        <!-- Page Header -->
-        <div class="page-header mb-4">
-            <div class="d-flex align-items-center justify-content-between">
+        <!-- Header Section -->
+        <div class="detail-header">
+            <div class="header-top">
                 <div>
-                    <h1 class="page-title">Request Details</h1>
-                    <p class="text-muted">Scrap Request ID: #{{ scrap_request.id }}</p>
+                    <h1>Request Details</h1>
+                    <p class="header-subtitle">Scrap Request ID: #{{ scrap_request.id }}</p>
                 </div>
-                <a href="{% if user.profile.role == 'user' %}{% url 'user_dashboard' %}{% endif %}" class="btn btn-outline-secondary">
+                <a href="{% if user.profile.role == 'user' %}{% url 'user_dashboard' %}{% endif %}" class="btn-back">
                     <i class="fa-solid fa-arrow-left"></i> Back
                 </a>
             </div>
         </div>
 
-        <div class="row">
-            <!-- Vehicle Details Card -->
-            <div class="col-lg-6 mb-4">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-light border-bottom">
-                        <h5 class="mb-0"><i class="fa-solid fa-car text-primary"></i> Vehicle Information</h5>
+        <!-- Main Content Grid -->
+        <div class="content-grid">
+            <!-- Left Column: Vehicle Information -->
+            <div class="content-card">
+                <div class="card-header">
+                    <i class="fa-solid fa-car"></i>
+                    <h2>Vehicle Information</h2>
+                </div>
+                <div class="card-body">
+                    <div class="info-row">
+                        <span class="info-label">Registration Number</span>
+                        <span class="info-value registration">{{ scrap_request.vehicle.registration_number }}</span>
                     </div>
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label class="text-muted small">Registration Number</label>
-                                <h6 class="text-uppercase fw-bold">{{ scrap_request.vehicle.registration_number }}</h6>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="text-muted small">Vehicle Type</label>
-                                <p>{{ scrap_request.vehicle.vehicle_type }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="text-muted small">Age</label>
-                                <p>{{ scrap_request.vehicle.age }} years</p>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="text-muted small">Mileage</label>
-                                <p>{{ scrap_request.vehicle.mileage }} km</p>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="text-muted small">Submitted Date</label>
-                                <p>{{ scrap_request.submitted_at|date:"d M Y, H:i" }}</p>
-                            </div>
-                        </div>
 
-                        {% if scrap_request.vehicle.image %}
-                        <div class="mt-4">
-                            <label class="text-muted small">Vehicle Image</label>
-                            <img src="{{ scrap_request.vehicle.image.url }}" alt="Vehicle Image" class="img-fluid rounded" style="max-height: 300px; object-fit: cover;">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Vehicle Type</span>
+                            <span class="info-value">{{ scrap_request.vehicle.vehicle_type }}</span>
                         </div>
-                        {% endif %}
+                        <div class="info-item">
+                            <span class="info-label">Age</span>
+                            <span class="info-value">{{ scrap_request.vehicle.age }} years</span>
+                        </div>
                     </div>
+
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Mileage</span>
+                            <span class="info-value">{{ scrap_request.vehicle.mileage }} km</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Submitted Date</span>
+                            <span class="info-value">{{ scrap_request.submitted_at|date:"d M Y, H:i" }}</span>
+                        </div>
+                    </div>
+
+                    {% if scrap_request.vehicle.image %}
+                    <div class="vehicle-image-container">
+                        <img src="{{ scrap_request.vehicle.image.url }}" alt="Vehicle Image" class="vehicle-image">
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
-            <!-- Request Status & Assessment -->
-            <div class="col-lg-6 mb-4">
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-light border-bottom">
-                        <h5 class="mb-0"><i class="fa-solid fa-file-alt text-primary"></i> Request Status</h5>
+            <!-- Right Column: Status & Assessment -->
+            <div class="content-column">
+                <!-- Status Card -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-clipboard"></i>
+                        <h2>Request Status</h2>
                     </div>
                     <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label class="text-muted small">Current Status</label>
-                                <div>
-                                    {% if scrap_request.status == 'submitted' %}
-                                    <span class="badge bg-warning text-dark">
-                                        <i class="fa-solid fa-hourglass-start"></i> Submitted
-                                    </span>
-                                    {% elif scrap_request.status == 'under_agency_review' %}
-                                    <span class="badge bg-info">
-                                        <i class="fa-solid fa-magnifying-glass"></i> Under Agency Review
-                                    </span>
-                                    {% elif scrap_request.status == 'forwarded' %}
-                                    <span class="badge bg-primary">
-                                        <i class="fa-solid fa-arrow-right"></i> Forwarded to RTO
-                                    </span>
-                                    {% elif scrap_request.status == 'approved' %}
-                                    <span class="badge bg-success">
-                                        <i class="fa-solid fa-check-circle"></i> Approved
-                                    </span>
-                                    {% elif scrap_request.status == 'rejected' %}
-                                    <span class="badge bg-danger">
-                                        <i class="fa-solid fa-times-circle"></i> Rejected
-                                    </span>
-                                    {% endif %}
-                                </div>
-                            </div>
+                        <div class="status-display">
+                            {% if scrap_request.status == 'submitted' %}
+                            <span class="status-badge submitted">
+                                <i class="fa-solid fa-hourglass-end"></i> Submitted
+                            </span>
+                            {% elif scrap_request.status == 'under_agency_review' %}
+                            <span class="status-badge review">
+                                <i class="fa-solid fa-magnifying-glass"></i> Under Review
+                            </span>
+                            {% elif scrap_request.status == 'forwarded' %}
+                            <span class="status-badge forwarded">
+                                <i class="fa-solid fa-arrow-right"></i> Forwarded to RTO
+                            </span>
+                            {% elif scrap_request.status == 'approved' %}
+                            <span class="status-badge approved">
+                                <i class="fa-solid fa-check-circle"></i> Approved
+                            </span>
+                            {% elif scrap_request.status == 'rejected' %}
+                            <span class="status-badge rejected">
+                                <i class="fa-solid fa-ban"></i> Rejected
+                            </span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
 
                 <!-- Scrap Assessment Card -->
                 {% if scrap_request.damage_level and scrap_request.scrap_price %}
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-light border-bottom">
-                        <h5 class="mb-0"><i class="fa-solid fa-assessment text-primary"></i> Scrap Assessment</h5>
+                <div class="content-card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <h2>Scrap Assessment</h2>
                     </div>
                     <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="text-muted small">Damage Level</label>
-                                <h6 class="fw-bold">{{ scrap_request.damage_level }}</h6>
+                        <div class="assessment-grid">
+                            <div class="assessment-item">
+                                <span class="assessment-label">Damage Level</span>
+                                <span class="assessment-value damage">{{ scrap_request.damage_level }}</span>
                             </div>
-                            <div class="col-md-6">
-                                <label class="text-muted small">Estimated Scrap Value</label>
-                                <h6 class="fw-bold text-success">₹{{ scrap_request.scrap_price }}</h6>
+                            <div class="assessment-item">
+                                <span class="assessment-label">Estimated Scrap Value</span>
+                                <span class="assessment-value price">₹{{ scrap_request.scrap_price }}</span>
                             </div>
-                            {% if scrap_request.agency %}
-                            <div class="col-12">
-                                <label class="text-muted small">Assessed By (Scrap Dealer)</label>
-                                <p>{{ scrap_request.agency.first_name }} {{ scrap_request.agency.last_name }}<br><small class="text-muted">{{ scrap_request.agency.email }}</small></p>
-                            </div>
-                            {% endif %}
-                            {% if scrap_request.reviewed_at %}
-                            <div class="col-12">
-                                <label class="text-muted small">Assessment Date</label>
-                                <p>{{ scrap_request.reviewed_at|date:"d M Y, H:i" }}</p>
-                            </div>
-                            {% endif %}
                         </div>
+
+                        {% if scrap_request.agency %}
+                        <div class="assessment-info">
+                            <span class="assessment-label">Assessed By (Scrap Dealer)</span>
+                            <p class="mb-0">{{ scrap_request.agency.first_name }} {{ scrap_request.agency.last_name }}<br><small>{{ scrap_request.agency.email }}</small></p>
+                        </div>
+                        {% endif %}
+
+                        {% if scrap_request.reviewed_at %}
+                        <div class="assessment-info">
+                            <span class="assessment-label">Assessment Date</span>
+                            <p class="mb-0">{{ scrap_request.reviewed_at|date:"d M Y, H:i" }}</p>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 {% endif %}
             </div>
         </div>
 
-        <!-- Timeline -->
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-light border-bottom">
-                <h5 class="mb-0"><i class="fa-solid fa-timeline text-primary"></i> Request Timeline</h5>
+        <!-- Timeline Section -->
+        <div class="content-card full-width">
+            <div class="card-header">
+                <i class="fa-solid fa-timeline"></i>
+                <h2>Request Timeline</h2>
             </div>
             <div class="card-body">
                 <div class="timeline">
                     {% if scrap_request.submitted_at %}
                     <div class="timeline-item">
-                        <div class="timeline-marker bg-warning text-white">
+                        <div class="timeline-marker submitted">
                             <i class="fa-solid fa-paper-plane"></i>
                         </div>
                         <div class="timeline-content">
-                            <h6 class="mb-1">Request Submitted</h6>
-                            <p class="text-muted small mb-0">{{ scrap_request.submitted_at|date:"d M Y at H:i" }}</p>
+                            <h5>Request Submitted</h5>
+                            <p class="timeline-date">{{ scrap_request.submitted_at|date:"d M Y at H:i" }}</p>
                         </div>
                     </div>
                     {% endif %}
 
                     {% if scrap_request.reviewed_at %}
                     <div class="timeline-item">
-                        <div class="timeline-marker bg-info text-white">
-                            <i class="fa-solid fa-check"></i>
+                        <div class="timeline-marker review">
+                            <i class="fa-solid fa-magnifying-glass"></i>
                         </div>
                         <div class="timeline-content">
-                            <h6 class="mb-1">Reviewed by Scrap Dealer</h6>
-                            <p class="text-muted small mb-0">{{ scrap_request.reviewed_at|date:"d M Y at H:i" }}</p>
-                            <p class="mb-0"><small><strong>Damage:</strong> {{ scrap_request.damage_level }}, <strong>Price:</strong> ₹{{ scrap_request.scrap_price }}</small></p>
+                            <h5>Reviewed by Scrap Dealer</h5>
+                            <p class="timeline-date">{{ scrap_request.reviewed_at|date:"d M Y at H:i" }}</p>
+                            <p class="timeline-details"><strong>Damage:</strong> {{ scrap_request.damage_level }}, <strong>Price:</strong> ₹{{ scrap_request.scrap_price }}</p>
                         </div>
                     </div>
                     {% endif %}
 
                     {% if scrap_request.forwarded_at %}
                     <div class="timeline-item">
-                        <div class="timeline-marker bg-primary text-white">
+                        <div class="timeline-marker forwarded">
                             <i class="fa-solid fa-arrow-right"></i>
                         </div>
                         <div class="timeline-content">
-                            <h6 class="mb-1">Forwarded to RTO</h6>
-                            <p class="text-muted small mb-0">{{ scrap_request.forwarded_at|date:"d M Y at H:i" }}</p>
+                            <h5>Forwarded to RTO</h5>
+                            <p class="timeline-date">{{ scrap_request.forwarded_at|date:"d M Y at H:i" }}</p>
                         </div>
                     </div>
                     {% endif %}
 
                     {% if scrap_request.approved_at %}
                     <div class="timeline-item">
-                        <div class="timeline-marker bg-success text-white">
+                        <div class="timeline-marker approved">
                             <i class="fa-solid fa-check-circle"></i>
                         </div>
                         <div class="timeline-content">
-                            <h6 class="mb-1">Approved by RTO</h6>
-                            <p class="text-muted small mb-0">{{ scrap_request.approved_at|date:"d M Y at H:i" }}</p>
+                            <h5>Approved by RTO</h5>
+                            <p class="timeline-date">{{ scrap_request.approved_at|date:"d M Y at H:i" }}</p>
                             {% if scrap_request.rto_officer %}
-                            <p class="mb-0"><small><strong>Approved by:</strong> {{ scrap_request.rto_officer.first_name }} {{ scrap_request.rto_officer.last_name }}</small></p>
+                            <p class="timeline-details"><strong>Approved by:</strong> {{ scrap_request.rto_officer.first_name }} {{ scrap_request.rto_officer.last_name }}</p>
                             {% endif %}
                         </div>
                     </div>
@@ -191,12 +195,12 @@
 
                     {% if scrap_request.status == 'rejected' %}
                     <div class="timeline-item">
-                        <div class="timeline-marker bg-danger text-white">
-                            <i class="fa-solid fa-times-circle"></i>
+                        <div class="timeline-marker rejected">
+                            <i class="fa-solid fa-ban"></i>
                         </div>
                         <div class="timeline-content">
-                            <h6 class="mb-1">Rejected</h6>
-                            <p class="text-muted small mb-0">Request rejected by RTO</p>
+                            <h5>Rejected</h5>
+                            <p class="timeline-date">Request rejected by RTO</p>
                         </div>
                     </div>
                     {% endif %}
@@ -204,15 +208,16 @@
             </div>
         </div>
 
-        <!-- Action Logs -->
+        <!-- Activity Log -->
         {% if scrap_request.logs.all %}
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-light border-bottom">
-                <h5 class="mb-0"><i class="fa-solid fa-history text-primary"></i> Activity Log</h5>
+        <div class="content-card full-width">
+            <div class="card-header">
+                <i class="fa-solid fa-history"></i>
+                <h2>Activity Log</h2>
             </div>
-            <div class="table-responsive">
-                <table class="table table-hover table-sm mb-0">
-                    <thead class="table-light">
+            <div class="card-body table-wrapper">
+                <table class="activity-table">
+                    <thead>
                         <tr>
                             <th>Action</th>
                             <th>Performed By</th>
@@ -223,9 +228,7 @@
                     <tbody>
                         {% for log in scrap_request.logs.all|dictsort:"timestamp" %}
                         <tr>
-                            <td>
-                                <strong>{{ log.action }}</strong>
-                            </td>
+                            <td><strong>{{ log.action }}</strong></td>
                             <td>{{ log.user.first_name }} {{ log.user.last_name }}</td>
                             <td>{{ log.timestamp|date:"d M Y, H:i" }}</td>
                             <td><small>{{ log.details|truncatewords:20 }}</small></td>
@@ -237,38 +240,318 @@
         </div>
         {% endif %}
 
-        <!-- Certificate Download Section -->
+        <!-- Certificate Section -->
         {% if scrap_request.status == 'approved' %}
-        <div class="alert alert-success alert-dismissible fade show mt-4" role="alert">
-            <div class="row align-items-center">
-                <div class="col-auto">
-                    <i class="fa-solid fa-certificate text-success" style="font-size: 2rem;"></i>
-                </div>
-                <div class="col">
-                    <h5 class="mb-1">Digital Certificate Available</h5>
-                    <p class="mb-0">Your vehicle has been approved for scrapping. Download your digital scrap certificate.</p>
-                </div>
-                <div class="col-auto">
-                    <a href="{% url 'download_certificate' scrap_request.id %}" class="btn btn-success">
-                        <i class="fa-solid fa-download"></i> Download Certificate
-                    </a>
-                </div>
+        <div class="certificate-banner">
+            <div class="cert-icon">
+                <i class="fa-solid fa-certificate"></i>
             </div>
+            <div class="cert-content">
+                <h3>Digital Certificate Available</h3>
+                <p>Your vehicle has been approved for scrapping. Download your official digital certificate now.</p>
+            </div>
+            <a href="{% url 'download_certificate' scrap_request.id %}" class="btn-download">
+                <i class="fa-solid fa-download"></i> Download Certificate
+            </a>
         </div>
         {% endif %}
     </div>
-</main>
+</div>
 
 <style>
+* {
+    box-sizing: border-box;
+}
+
+.detail-wrapper {
+    background: linear-gradient(135deg, #f5f7fa 0%, #f1f4f8 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container-fluid {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Header */
+.detail-header {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.detail-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a202c;
+    margin: 0 0 8px 0;
+}
+
+.header-subtitle {
+    font-size: 16px;
+    color: #718096;
+    margin: 0;
+}
+
+.btn-back {
+    background: white;
+    color: #6c757d;
+    padding: 10px 20px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-back:hover {
+    border-color: #0d6efd;
+    color: #0d6efd;
+    background: #f8f9fa;
+}
+
+/* Content Grid */
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.content-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.content-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.content-card:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.content-card.full-width {
+    grid-column: 1 / -1;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f4f8 100%);
+    padding: 20px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.card-header i {
+    color: #0d6efd;
+    font-size: 20px;
+}
+
+.card-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a202c;
+}
+
+.card-body {
+    padding: 24px;
+}
+
+/* Info Styles */
+.info-row {
+    margin-bottom: 24px;
+}
+
+.info-label {
+    display: block;
+    font-size: 12px;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.info-value {
+    display: block;
+    font-size: 16px;
+    color: #1a202c;
+    font-weight: 500;
+}
+
+.info-value.registration {
+    font-size: 22px;
+    font-weight: 700;
+    background: #e3f2fd;
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: #0d6efd;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.vehicle-image-container {
+    margin-top: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #e9ecef;
+}
+
+.vehicle-image {
+    width: 100%;
+    height: auto;
+    max-height: 350px;
+    object-fit: cover;
+    display: block;
+}
+
+/* Status Display */
+.status-display {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.status-badge i {
+    font-size: 18px;
+}
+
+.status-badge.submitted {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.review {
+    background: #cfe2ff;
+    color: #084298;
+}
+
+.status-badge.forwarded {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-badge.approved {
+    background: #d1e7dd;
+    color: #0a3622;
+}
+
+.status-badge.rejected {
+    background: #f8d7da;
+    color: #842029;
+}
+
+/* Assessment Styles */
+.assessment-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.assessment-item {
+    display: flex;
+    flex-direction: column;
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.assessment-label {
+    display: block;
+    font-size: 12px;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.assessment-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a202c;
+}
+
+.assessment-value.damage {
+    color: #ff6b6b;
+}
+
+.assessment-value.price {
+    color: #198754;
+}
+
+.assessment-info {
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.assessment-info p {
+    margin-bottom: 0;
+    font-size: 14px;
+    color: #1a202c;
+}
+
+.assessment-info small {
+    color: #6c757d;
+}
+
+/* Timeline */
 .timeline {
     position: relative;
-    padding-left: 2rem;
+    padding: 20px 0;
 }
 
 .timeline-item {
     position: relative;
-    padding-left: 2.5rem;
-    padding-bottom: 2rem;
+    padding-left: 80px;
+    padding-bottom: 30px;
 }
 
 .timeline-item:last-child {
@@ -278,11 +561,11 @@
 .timeline-item::before {
     content: '';
     position: absolute;
-    left: -0.75rem;
-    top: 2.5rem;
-    bottom: -2rem;
+    left: 30px;
+    top: 60px;
+    bottom: -30px;
     width: 2px;
-    background: #dee2e6;
+    background: #e9ecef;
 }
 
 .timeline-item:last-child::before {
@@ -291,21 +574,282 @@
 
 .timeline-marker {
     position: absolute;
-    left: -1.25rem;
+    left: 0;
     top: 0;
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
-    border: 3px solid #fff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    color: white;
+    font-size: 22px;
+    border: 3px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-marker.submitted {
+    background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+}
+
+.timeline-marker.review {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+.timeline-marker.forwarded {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+}
+
+.timeline-marker.approved {
+    background: linear-gradient(135deg, #198754 0%, #157347 100%);
+}
+
+.timeline-marker.rejected {
+    background: linear-gradient(135deg, #dc3545 0%, #bb2d3b 100%);
 }
 
 .timeline-content {
-    padding-left: 1rem;
+    padding-left: 0;
+}
+
+.timeline-content h5 {
+    margin: 0 0 6px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a202c;
+}
+
+.timeline-date {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #6c757d;
+}
+
+.timeline-details {
+    margin: 0;
+    font-size: 14px;
+    color: #495057;
+}
+
+/* Activity Table */
+.table-wrapper {
+    padding: 0;
+}
+
+.activity-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.activity-table thead tr {
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.activity-table th {
+    padding: 14px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.activity-table tbody tr {
+    border-bottom: 1px solid #dee2e6;
+    transition: background-color 0.2s ease;
+}
+
+.activity-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.activity-table td {
+    padding: 14px 16px;
+    color: #1a202c;
+    font-size: 14px;
+}
+
+/* Certificate Banner */
+.certificate-banner {
+    background: linear-gradient(135deg, #d1e7dd 0%, #c3e6cb 100%);
+    border-radius: 12px;
+    padding: 30px;
+    margin-top: 30px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.15);
+}
+
+.cert-icon {
+    font-size: 48px;
+    color: #198754;
+    flex-shrink: 0;
+}
+
+.cert-content {
+    flex-grow: 1;
+}
+
+.cert-content h3 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0a3622;
+}
+
+.cert-content p {
+    margin: 0;
+    font-size: 15px;
+    color: #155724;
+}
+
+.btn-download {
+    background: linear-gradient(135deg, #198754 0%, #157347 100%);
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.btn-download:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(25, 135, 84, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 991px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-header {
+        padding: 20px;
+    }
+
+    .detail-header h1 {
+        font-size: 24px;
+    }
+
+    .certificate-banner {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+    }
+
+    .btn-download {
+        justify-content: center;
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .detail-wrapper {
+        padding: 12px;
+    }
+
+    .detail-header {
+        padding: 16px;
+    }
+
+    .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .btn-back {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .detail-header h1 {
+        font-size: 20px;
+    }
+
+    .card-body {
+        padding: 16px;
+    }
+
+    .timeline-item {
+        padding-left: 60px;
+    }
+
+    .timeline-marker {
+        width: 50px;
+        height: 50px;
+        font-size: 18px;
+    }
+
+    .timeline-item::before {
+        left: 22px;
+    }
+
+    .assessment-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .activity-table th,
+    .activity-table td {
+        padding: 10px 12px;
+        font-size: 12px;
+    }
+
+    .certificate-banner {
+        padding: 20px;
+    }
+
+    .cert-icon {
+        font-size: 36px;
+    }
+
+    .cert-content h3 {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .detail-header h1 {
+        font-size: 18px;
+    }
+
+    .card-header {
+        padding: 16px;
+    }
+
+    .card-header h2 {
+        font-size: 16px;
+    }
+
+    .timeline-item {
+        padding-left: 50px;
+        padding-bottom: 20px;
+    }
+
+    .timeline-marker {
+        width: 45px;
+        height: 45px;
+        font-size: 16px;
+    }
+
+    .timeline-item::before {
+        left: 19px;
+    }
 }
 </style>
 {% endblock %}

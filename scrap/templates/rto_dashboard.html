@@ -1,73 +1,61 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<main class="main-content">
+<div class="dashboard-wrapper">
     <div class="container-fluid">
-        <!-- Page Header -->
-        <div class="page-header mb-4">
-            <div class="d-flex align-items-center justify-content-between">
+        <div class="dashboard-header">
+            <div>
+                <h1>RTO Officer Dashboard</h1>
+                <p class="header-sub">Verify and approve vehicle scrapping requests</p>
+            </div>
+            <div class="header-actions">
+                <a href="#" class="btn btn-outline-secondary">Reports</a>
+            </div>
+        </div>
+
+        <div class="stats-grid mb-4">
+            <div class="stat-box">
+                <div class="stat-icon blue"><i class="fa-solid fa-clock"></i></div>
                 <div>
-                    <h1 class="page-title">RTO Officer Dashboard</h1>
-                    <p class="text-muted">Verify and approve vehicle scrapping requests</p>
+                    <p class="stat-label">Awaiting Approval</p>
+                    <h3 class="stat-number">{{ awaiting_requests }}</h3>
+                </div>
+            </div>
+
+            <div class="stat-box">
+                <div class="stat-icon green"><i class="fa-solid fa-check-circle"></i></div>
+                <div>
+                    <p class="stat-label">Approved</p>
+                    <h3 class="stat-number">{{ approved_count }}</h3>
+                </div>
+            </div>
+
+            <div class="stat-box">
+                <div class="stat-icon red"><i class="fa-solid fa-times-circle"></i></div>
+                <div>
+                    <p class="stat-label">Rejected</p>
+                    <h3 class="stat-number">{{ rejected_count }}</h3>
                 </div>
             </div>
         </div>
 
-        <!-- Statistics Cards -->
-        <div class="row g-4 mb-4">
-            <div class="col-lg-4 col-md-6">
-                <div class="stat-card">
-                    <div class="stat-icon bg-primary">
-                        <i class="fa-solid fa-inbox"></i>
-                    </div>
-                    <div>
-                        <p class="stat-label">Awaiting Approval</p>
-                        <h4 class="stat-value">{{ awaiting_requests }}</h4>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-4 col-md-6">
-                <div class="stat-card">
-                    <div class="stat-icon bg-success">
-                        <i class="fa-solid fa-check-circle"></i>
-                    </div>
-                    <div>
-                        <p class="stat-label">Approved</p>
-                        <h4 class="stat-value">{{ approved_count }}</h4>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-4 col-md-6">
-                <div class="stat-card">
-                    <div class="stat-icon bg-danger">
-                        <i class="fa-solid fa-times-circle"></i>
-                    </div>
-                    <div>
-                        <p class="stat-label">Rejected</p>
-                        <h4 class="stat-value">{{ rejected_count }}</h4>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Requests Table -->
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-light border-bottom">
-                <h5 class="mb-0"><i class="fa-solid fa-list text-primary"></i> Requests for Approval</h5>
+        <div class="card content-card">
+            <div class="card-header">
+                <i class="fa-solid fa-list text-primary"></i>
+                <h2>Requests for Approval</h2>
+                <span class="badge-total">{{ requests|length }} total</span>
             </div>
 
             {% if requests %}
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
+                <table class="table requests-table">
+                    <thead>
                         <tr>
-                            <th>Vehicle Registration</th>
-                            <th>Owner Name</th>
+                            <th>Vehicle</th>
+                            <th>Owner</th>
                             <th>Scrap Dealer</th>
-                            <th>Damage Level</th>
-                            <th>Scrap Value</th>
+                            <th>Damage</th>
+                            <th>Value</th>
                             <th>Forwarded</th>
                             <th>Actions</th>
                         </tr>
@@ -75,39 +63,20 @@
                     <tbody>
                         {% for request in requests %}
                         <tr>
+                            <td><span class="reg">{{ request.vehicle.registration_number }}</span></td>
                             <td>
-                                <span class="fw-bold text-uppercase">{{ request.vehicle.registration_number }}</span>
+                                <div class="owner-name">{{ request.user.first_name }} {{ request.user.last_name }}</div>
+                                <div class="owner-email">{{ request.user.email }}</div>
                             </td>
+                            <td>{% if request.agency %}<strong>{{ request.agency.first_name }} {{ request.agency.last_name }}</strong><div class="owner-email">{{ request.agency.email }}</div>{% else %}—{% endif %}</td>
+                            <td>{% if request.damage_level %}<span class="damage">{{ request.damage_level }}</span>{% else %}—{% endif %}</td>
+                            <td>{% if request.scrap_price %}<span class="price">₹{{ request.scrap_price }}</span>{% else %}—{% endif %}</td>
+                            <td>{{ request.forwarded_at|date:"d M Y" }}</td>
                             <td>
-                                <strong>{{ request.user.first_name }} {{ request.user.last_name }}</strong><br>
-                                <small class="text-muted">{{ request.user.email }}</small>
-                            </td>
-                            <td>
-                                {% if request.agency %}
-                                <strong>{{ request.agency.first_name }} {{ request.agency.last_name }}</strong><br>
-                                <small class="text-muted">{{ request.agency.email }}</small>
-                                {% else %}
-                                <span class="text-muted">—</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <span class="badge bg-secondary">{{ request.damage_level }}</span>
-                            </td>
-                            <td>
-                                <span class="fw-bold text-success">₹{{ request.scrap_price }}</span>
-                            </td>
-                            <td><small>{{ request.forwarded_at|date:"d M Y" }}</small></td>
-                            <td>
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <a href="{% url 'approve_request' request.id %}" 
-                                        class="btn btn-primary" title="Review & Approve">
-                                        <i class="fa-solid fa-check"></i> Review
-                                    </a>
+                                <div class="actions">
+                                    <a href="{% url 'approve_request' request.id %}" class="btn small primary">Review</a>
                                     {% if request.vehicle.image %}
-                                    <a href="{{ request.vehicle.image.url }}" target="_blank"
-                                        class="btn btn-outline-secondary" title="View Vehicle Image">
-                                        <i class="fa-solid fa-image"></i>
-                                    </a>
+                                    <a href="{{ request.vehicle.image.url }}" target="_blank" class="btn small outline">Image</a>
                                     {% endif %}
                                 </div>
                             </td>
@@ -117,67 +86,45 @@
                 </table>
             </div>
             {% else %}
-            <div class="card-body text-center py-5">
-                <i class="fa-solid fa-inbox text-muted" style="font-size: 3rem;"></i>
-                <h5 class="mt-3">No Requests Awaiting Approval</h5>
-                <p class="text-muted">All requests have been processed</p>
+            <div class="empty-state">
+                <i class="fa-solid fa-inbox icon-muted"></i>
+                <h4>No Requests Awaiting Approval</h4>
+                <p class="muted">All requests have been processed</p>
             </div>
             {% endif %}
         </div>
     </div>
-</main>
+</div>
 
 <style>
-.stat-card {
-    background: white;
-    border: none;
-    border-radius: 0.75rem;
-    padding: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    transition: box-shadow 0.3s ease;
-}
-
-.stat-card:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.12);
-}
-
-.stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.5rem;
-    flex-shrink: 0;
-}
-
-.stat-label {
-    font-size: 0.875rem;
-    color: #6c757d;
-    margin-bottom: 0.5rem;
-}
-
-.stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #212529;
-    margin: 0;
-}
-
-.page-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #212529;
-    margin: 0;
-}
-
-.page-header {
-    padding: 1.5rem 0;
-}
+.dashboard-wrapper { background: linear-gradient(135deg,#f5f7fa 0%,#f1f4f8 100%); padding:24px; }
+.container-fluid { max-width:1200px; margin:0 auto; }
+.dashboard-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:20px; }
+.dashboard-header h1{margin:0;font-size:28px}
+.header-sub{color:#6c757d}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:20px}
+.stat-box{background:#fff;padding:18px;border-radius:12px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 18px rgba(15,23,42,0.04)}
+.stat-icon{width:64px;height:64px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px}
+.stat-icon.blue{background:linear-gradient(135deg,#0d6efd,#0b5ed7)}
+.stat-icon.green{background:linear-gradient(135deg,#28a745,#198754)}
+.stat-icon.red{background:linear-gradient(135deg,#dc3545,#bb2d3b)}
+.stat-label{font-size:12px;color:#6c757d;text-transform:uppercase}
+.stat-number{font-size:28px;font-weight:700;margin:0}
+.content-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 6px 20px rgba(15,23,42,0.04)}
+.card-header{display:flex;align-items:center;gap:12px;padding:18px;border-bottom:1px solid #eef2f6}
+.card-header h2{margin:0;font-size:16px}
+.badge-total{margin-left:auto;background:#0d6efd;color:#fff;padding:6px 12px;border-radius:20px;font-weight:700}
+.requests-table th{background:#f8fafc;text-transform:uppercase;font-size:12px;color:#6c757d}
+.requests-table td{padding:14px}
+.reg{font-weight:700;color:#0d6efd}
+.owner-email{font-size:12px;color:#6c757d}
+.damage{background:#e9ecef;padding:6px 10px;border-radius:8px}
+.price{font-weight:700;color:#198754}
+.actions .btn{margin-right:6px;padding:8px 10px;border-radius:8px;text-decoration:none}
+.btn.small.primary{background:#0d6efd;color:#fff}
+.btn.small.outline{border:1px solid #dee2e6;color:#495057;background:#fff}
+.empty-state{padding:40px;text-align:center;color:#6c757d}
+.empty-state .icon-muted{font-size:48px;color:#e9ecef}
+@media (max-width:768px){.dashboard-header{flex-direction:column;align-items:flex-start}.badge-total{margin-left:0}}
 </style>
 {% endblock %}

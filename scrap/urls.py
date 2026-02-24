@@ -18,4 +18,5 @@ urlpatterns = [
     path('approve_request/<int:request_id>/', views.approve_request, name='approve_request'),
     path('mark_notification_read/<int:notification_id>/', views.mark_notification_read, name='mark_notification_read'),
     path('download_certificate/<int:request_id>/', views.download_certificate, name='download_certificate'),
+    path('ml_analyze/<int:request_id>/', views.ml_analyze_vehicle, name='ml_analyze_vehicle'),
 ]

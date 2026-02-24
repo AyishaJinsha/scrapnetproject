@@ -6,6 +6,10 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from .models import Profile, Vehicle, ScrapRequest, Notification, ActionLog
 from .forms import VehicleForm, CustomUserCreationForm
+import logging
+from . import ml_model   # ← ML integration (loaded once at startup)
+
+logger = logging.getLogger(__name__)
 
 def home(request):
     return render(request, 'home.html')
@@ -127,7 +131,7 @@ def review_request(request, request_id):
     profile = get_object_or_404(Profile, user=request.user)
     if profile.role != 'agency':
         return redirect('dashboard')
-    scrap_request = get_object_or_404(ScrapRequest, id=request_id, status='submitted')
+    scrap_request = get_object_or_404(ScrapRequest, id=request_id, status__in=['submitted', 'under_agency_review'])
     if request.method == 'POST':
         damage_level = request.POST.get('damage_level')
         scrap_price = request.POST.get('scrap_price')
@@ -183,6 +187,117 @@ def forward_request(request, request_id):
 
     messages.success(request, 'Request forwarded to RTO successfully.')
     return redirect('agency_dashboard')
+
+# ══════════════════════════════════════════════════════════════
+# ML ANALYSIS VIEW  (Agency Only)
+# ══════════════════════════════════════════════════════════════
+
+@login_required
+def ml_analyze_vehicle(request, request_id):
+    """
+    Agency triggers ML analysis on a submitted vehicle.
+
+    Security:
+    • Only agency role can access.
+    • If already ML-processed, further predictions are blocked.
+
+    On POST:
+    • Runs damage CNN → sets damage_level
+    • Runs price regressor → sets scrap_price
+    • Sets ml_processed = True, prediction_timestamp = now
+    • Creates ActionLog entry + notifies the vehicle owner
+    """
+    profile = get_object_or_404(Profile, user=request.user)
+    if profile.role != 'agency':
+        messages.error(request, 'Only agency users can run ML analysis.')
+        return redirect('dashboard')
+
+    scrap_request = get_object_or_404(ScrapRequest, id=request_id)
+
+    # ── Guard: prevent repeated predictions ───────────────────
+    if scrap_request.ml_processed:
+        messages.warning(
+            request,
+            f'ML analysis already completed for this vehicle. '
+            f'Damage: {scrap_request.damage_level}, Price: ₹{scrap_request.scrap_price}'
+        )
+        return redirect('agency_dashboard')
+
+    if request.method == 'POST':
+        vehicle = scrap_request.vehicle
+
+        # ── 1. Damage Detection ───────────────────────────────
+        damage_level = "Medium"   # default
+        if vehicle.image and vehicle.image.name:
+            import time
+            start_ml = time.time()
+            try:
+                image_path = vehicle.image.path
+                damage_level = ml_model.predict_damage(image_path)
+                ml_duration = time.time() - start_ml
+                logger.info(f"Total ML Analysis time: {ml_duration:.4f}s")
+            except Exception as e:
+                messages.warning(request, f'Image prediction failed ({e}). Using rule-based fallback.')
+                damage_level = ml_model._rule_based_damage(vehicle.image.path if vehicle.image else "")
+        else:
+            # No image uploaded – use rule-based defaults based on age
+            age = vehicle.age
+            if age < 5:
+                damage_level = "Low"
+            elif age < 12:
+                damage_level = "Medium"
+            else:
+                damage_level = "High"
+
+        # ── 2. Price Prediction ───────────────────────────────
+        scrap_price = ml_model.predict_price(
+            age=vehicle.age,
+            mileage=vehicle.mileage,
+            vehicle_type=vehicle.vehicle_type,
+            damage_level=damage_level,
+        )
+
+        # ── 3. Save to database ───────────────────────────────
+        scrap_request.damage_level        = damage_level
+        scrap_request.scrap_price         = scrap_price
+        scrap_request.ml_processed        = True
+        scrap_request.prediction_timestamp = timezone.now()
+        scrap_request.status              = 'under_agency_review'
+        scrap_request.agency              = request.user
+        scrap_request.reviewed_at         = timezone.now()
+        scrap_request.save()
+
+        # ── 4. Action log ─────────────────────────────────────
+        ActionLog.objects.create(
+            scrap_request=scrap_request,
+            user=request.user,
+            action='ML Analysis Completed',
+            details=(
+                f'AI Damage Level: {damage_level} | '
+                f'AI Scrap Price: ₹{scrap_price} | '
+                f'Timestamp: {scrap_request.prediction_timestamp.strftime("%d-%m-%Y %H:%M:%S")}'
+            ),
+        )
+
+        # ── 5. Notify vehicle owner ───────────────────────────
+        Notification.objects.create(
+            user=scrap_request.user,
+            message=(
+                f'🤖 AI Analysis completed for your vehicle '
+                f'{vehicle.registration_number}. '
+                f'Damage Level: {damage_level} | '
+                f'Estimated Scrap Value: ₹{scrap_price:,.2f}'
+            ),
+        )
+
+        messages.success(
+            request,
+            f'✅ ML Analysis Done! Damage: {damage_level}, Price: ₹{scrap_price:,.2f}'
+        )
+        return redirect('agency_dashboard')
+
+    # GET → show confirmation page
+    return render(request, 'ml_analyze.html', {'scrap_request': scrap_request})
 
 @login_required
 def rto_dashboard(request):
@@ -266,67 +381,184 @@ def view_request_detail(request, request_id):
 
 @login_required
 def download_certificate(request, request_id):
-    """Generate and download digital scrap certificate"""
+    """Generate and download a digital scrap certificate as PDF (with reportlab fallback to text)."""
     from django.http import HttpResponse
     from datetime import datetime
-    
+
     scrap_request = get_object_or_404(ScrapRequest, id=request_id, status='approved')
     profile = get_object_or_404(Profile, user=request.user)
-    
-    # Only vehicle owner can download certificate
+
     if scrap_request.user != request.user:
         messages.error(request, 'You do not have permission to download this certificate.')
         return redirect('user_dashboard')
-    
-    # Generate simple certificate content
+
+    cert_id = f"SCF-{scrap_request.id:05d}-{scrap_request.approved_at.strftime('%Y%m%d')}"
+    vehicle  = scrap_request.vehicle
+    owner    = scrap_request.user
+    agency   = scrap_request.agency
+    rto      = scrap_request.rto_officer
+    now_str  = datetime.now().strftime('%d-%m-%Y %H:%M:%S')
+
+    # ── Try PDF generation ────────────────────────────────────
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib import colors
+        from reportlab.lib.units import cm
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.enums import TA_CENTER, TA_LEFT
+        import io
+
+        buffer = io.BytesIO()
+        doc    = SimpleDocTemplate(buffer, pagesize=A4,
+                                   rightMargin=2*cm, leftMargin=2*cm,
+                                   topMargin=2*cm, bottomMargin=2*cm)
+
+        styles = getSampleStyleSheet()
+        purple = colors.HexColor('#764ba2')
+        dark   = colors.HexColor('#1a1a2e')
+
+        title_style = ParagraphStyle('Title', parent=styles['Title'],
+                                     textColor=purple, fontSize=22, spaceAfter=4, alignment=TA_CENTER)
+        sub_style   = ParagraphStyle('Sub', parent=styles['Normal'],
+                                     textColor=colors.grey, fontSize=10, alignment=TA_CENTER)
+        section_style = ParagraphStyle('Section', parent=styles['Heading2'],
+                                       textColor=dark, fontSize=12, spaceBefore=14, spaceAfter=6)
+        body_style  = styles['Normal']
+
+        def row(label, value):
+            return [Paragraph(f'<b>{label}</b>', body_style), Paragraph(str(value), body_style)]
+
+        tbl_style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f9f9ff')),
+            ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.white, colors.HexColor('#f0f0ff')]),
+            ('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#e0e0e0')),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING', (0, 0), (-1, -1), 10),
+        ])
+
+        elements = [
+            Paragraph('🏛️  SCRAPNET', title_style),
+            Paragraph('Digital Scrap Certificate – Government Transport Authority', sub_style),
+            Paragraph(f'Certificate ID: <b>{cert_id}</b>', sub_style),
+            Spacer(1, 0.3*cm),
+            HRFlowable(width='100%', thickness=2, color=purple),
+            Spacer(1, 0.4*cm),
+
+            Paragraph('Vehicle Details', section_style),
+            Table([
+                row('Registration Number', vehicle.registration_number),
+                row('Vehicle Type',        vehicle.vehicle_type),
+                row('Age',                 f'{vehicle.age} years'),
+                row('Mileage',             f'{vehicle.mileage:,} km'),
+            ], colWidths=[6*cm, 11*cm], style=tbl_style),
+
+            Spacer(1, 0.3*cm),
+            Paragraph('Owner Details', section_style),
+            Table([
+                row('Name',     owner.get_full_name() or owner.username),
+                row('Username', owner.username),
+                row('Email',    owner.email),
+            ], colWidths=[6*cm, 11*cm], style=tbl_style),
+
+            Spacer(1, 0.3*cm),
+            Paragraph('Scrap Assessment', section_style),
+            Table([
+                row('Damage Level',     scrap_request.damage_level or '—'),
+                row('Estimated Value',  f'₹{scrap_request.scrap_price:,}'),
+                row('ML Processed',     '✅ Yes (AI Analysis)' if scrap_request.ml_processed else 'Manual Assessment'),
+                row('ML Timestamp',     scrap_request.prediction_timestamp.strftime('%d-%m-%Y %H:%M:%S')
+                                        if scrap_request.prediction_timestamp else '—'),
+                row('Scrap Dealer',     agency.get_full_name() or agency.username if agency else '—'),
+            ], colWidths=[6*cm, 11*cm], style=tbl_style),
+
+            Spacer(1, 0.3*cm),
+            Paragraph('Approval Information', section_style),
+            Table([
+                row('Submitted Date', scrap_request.submitted_at.strftime('%d-%m-%Y %H:%M:%S')),
+                row('Approved Date',  scrap_request.approved_at.strftime('%d-%m-%Y %H:%M:%S')),
+                row('Approved By',    rto.get_full_name() or rto.username if rto else 'RTO'),
+            ], colWidths=[6*cm, 11*cm], style=tbl_style),
+
+            Spacer(1, 0.5*cm),
+            HRFlowable(width='100%', thickness=1, color=colors.HexColor('#e0e0e0')),
+            Spacer(1, 0.3*cm),
+
+            Paragraph(
+                '<b>STATUS: VEHICLE DE-REGISTERED &amp; APPROVED FOR SCRAPPING</b>',
+                ParagraphStyle('Status', parent=body_style,
+                               textColor=colors.HexColor('#1b5e20'),
+                               backColor=colors.HexColor('#e8f5e9'),
+                               alignment=TA_CENTER, fontSize=11,
+                               borderPadding=(6, 12, 6, 12))
+            ),
+            Spacer(1, 0.3*cm),
+            Paragraph(
+                f'<font color="grey" size="8">This certificate confirms that the above vehicle has been permanently '
+                f'de-registered from the transport authority and is approved for scrapping. '
+                f'Generated: {now_str} | System: ScrapNet</font>',
+                ParagraphStyle('Footer', parent=body_style, alignment=TA_CENTER)
+            ),
+        ]
+
+        doc.build(elements)
+        pdf_bytes = buffer.getvalue()
+        buffer.close()
+
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        filename = f'ScrapCertificate_{vehicle.registration_number}.pdf'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    except ImportError:
+        # ── Fallback to text ─────────────────────────────────
+        pass
+
+    # ── Plain-text fallback ───────────────────────────────────
+    ml_line = (f'ML Damage     : {scrap_request.damage_level} (AI predicted)\n'
+               f'ML Timestamp  : {scrap_request.prediction_timestamp.strftime("%d-%m-%Y %H:%M:%S")}\n'
+               if scrap_request.ml_processed else '')
+
     certificate_content = f"""
-    ================================================================================
-                    SCRAPNET - DIGITAL SCRAP CERTIFICATE
-    ================================================================================
-    
-    Certificate ID: SCF-{scrap_request.id:05d}-{scrap_request.approved_at.strftime('%Y%m%d')}
-    
-    Vehicle Details:
-    ────────────────────────────────────────────────────────────────────────────
-    Registration Number: {scrap_request.vehicle.registration_number}
-    Vehicle Type: {scrap_request.vehicle.vehicle_type}
-    Age: {scrap_request.vehicle.age} years
-    Mileage: {scrap_request.vehicle.mileage} km
-    
-    Owner Details:
-    ────────────────────────────────────────────────────────────────────────────
-    Name: {scrap_request.user.first_name or scrap_request.user.username}
-    Username: {scrap_request.user.username}
-    Email: {scrap_request.user.email}
-    
-    Scrap Assessment:
-    ────────────────────────────────────────────────────────────────────────────
-    Damage Level: {scrap_request.damage_level}
-    Estimated Scrap Value: ₹{scrap_request.scrap_price}
-    Scrap Dealer: {scrap_request.agency.first_name or scrap_request.agency.username if scrap_request.agency else 'N/A'}
-    
-    Approval Information:
-    ────────────────────────────────────────────────────────────────────────────
-    Submitted Date: {scrap_request.submitted_at.strftime('%d-%m-%Y %H:%M:%S')}
-    Approved Date: {scrap_request.approved_at.strftime('%d-%m-%Y %H:%M:%S')}
-    Approved By (RTO): {scrap_request.rto_officer.first_name or scrap_request.rto_officer.username if scrap_request.rto_officer else 'RTO'}
-    
-    Status: VEHICLE DE-REGISTERED & APPROVED FOR SCRAPPING
-    ────────────────────────────────────────────────────────────────────────────
-    
-    This certificate confirms that the above vehicle has been permanently 
-    de-registered from the transport authority and is approved for scrapping.
-    
-    Generated on: {datetime.now().strftime('%d-%m-%Y %H:%M:%S')}
-    System: ScrapNet - Vehicle Scrapping Management System
-    
-    ================================================================================
-    This is an electronically generated certificate and is valid without signature.
-    ================================================================================
-    """
-    
+================================================================================
+                 SCRAPNET – DIGITAL SCRAP CERTIFICATE
+================================================================================
+
+Certificate ID : {cert_id}
+Generated      : {now_str}
+
+VEHICLE DETAILS
+────────────────────────────────────────────────────────────────────────────────
+Registration   : {vehicle.registration_number}
+Vehicle Type   : {vehicle.vehicle_type}
+Age            : {vehicle.age} years
+Mileage        : {vehicle.mileage:,} km
+
+OWNER DETAILS
+────────────────────────────────────────────────────────────────────────────────
+Name           : {owner.get_full_name() or owner.username}
+Email          : {owner.email}
+
+SCRAP ASSESSMENT
+────────────────────────────────────────────────────────────────────────────────
+Damage Level   : {scrap_request.damage_level or '—'}
+Scrap Value    : ₹{scrap_request.scrap_price:,}
+{ml_line}Scrap Dealer   : {agency.get_full_name() or agency.username if agency else '—'}
+
+APPROVAL INFORMATION
+────────────────────────────────────────────────────────────────────────────────
+Submitted      : {scrap_request.submitted_at.strftime('%d-%m-%Y %H:%M:%S')}
+Approved       : {scrap_request.approved_at.strftime('%d-%m-%Y %H:%M:%S')}
+Approved by    : {rto.get_full_name() or rto.username if rto else 'RTO'}
+
+STATUS: VEHICLE DE-REGISTERED & APPROVED FOR SCRAPPING
+================================================================================
+This is an electronically generated certificate valid without signature.
+================================================================================
+"""
     response = HttpResponse(certificate_content, content_type='text/plain')
-    filename = f"Scrap_Certificate_{scrap_request.vehicle.registration_number}.txt"
+    filename = f'ScrapCertificate_{vehicle.registration_number}.txt'
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    
     return response

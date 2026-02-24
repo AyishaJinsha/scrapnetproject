@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+
+            <!-- Header Card -->
+            <div class="card shadow border-0 mb-4" style="border-radius:1rem; overflow:hidden;">
+                <div class="card-header text-white py-4 text-center"
+                    style="background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);">
+                    <i class="fas fa-robot fa-3x mb-2"></i>
+                    <h3 class="mb-0 fw-bold">AI Vehicle Analysis</h3>
+                    <p class="mb-0 opacity-75">Machine Learning powered assessment</p>
+                </div>
+
+                <div class="card-body p-4">
+
+                    <!-- Vehicle Info -->
+                    <div class="bg-light rounded-3 p-3 mb-4">
+                        <h6 class="fw-bold text-muted mb-3">
+                            <i class="fas fa-car me-2 text-primary"></i>Vehicle Details
+                        </h6>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <small class="text-muted d-block">Registration</small>
+                                <strong>{{ scrap_request.vehicle.registration_number }}</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Type</small>
+                                <strong>{{ scrap_request.vehicle.vehicle_type }}</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Age</small>
+                                <strong>{{ scrap_request.vehicle.age }} years</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Mileage</small>
+                                <strong>{{ scrap_request.vehicle.mileage|floatformat:0 }} km</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if scrap_request.vehicle.image %}
+                    <div class="text-center mb-4">
+                        <img src="{{ scrap_request.vehicle.image.url }}" class="img-fluid rounded-3 shadow-sm"
+                            style="max-height:200px;object-fit:cover;" alt="Vehicle Image">
+                        <p class="text-muted mt-2 small">
+                            <i class="fas fa-check-circle text-success me-1"></i>
+                            Image found – CNN damage analysis will run
+                        </p>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning border-0 rounded-3" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No image uploaded. Damage level will be estimated from age.
+                    </div>
+                    {% endif %}
+
+                    <!-- What the AI will do -->
+                    <div class="card bg-light border-0 rounded-3 mb-4">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-cog me-2 text-primary"></i>ML Analysis will:
+                            </h6>
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2">
+                                    <i class="fas fa-camera text-purple me-2" style="color:#764ba2;"></i>
+                                    <strong>Damage Detection</strong> – CNN analyses vehicle image
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-tag text-success me-2"></i>
+                                    <strong>Classification</strong> – Labels as Low / Medium / High
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-rupee-sign text-warning me-2"></i>
+                                    <strong>Price Prediction</strong> – Random Forest regression
+                                </li>
+                                <li>
+                                    <i class="fas fa-database text-info me-2"></i>
+                                    <strong>Auto-save</strong> – Results stored in database
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2">
+                            <button type="submit" id="run-ml-btn" class="btn btn-lg text-white fw-bold py-3"
+                                style="background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:.75rem;"
+                                onclick="showLoading()">
+                                <i class="fas fa-robot me-2"></i>Run ML Analysis
+                            </button>
+                            <a href="{% url 'agency_dashboard' %}" class="btn btn-outline-secondary btn-lg"
+                                style="border-radius:.75rem;">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                        </div>
+                    </form>
+
+                    <!-- Loading overlay (hidden until clicked) -->
+                    <div id="loading-overlay" class="text-center py-4 d-none">
+                        <div class="spinner-border text-primary" role="status" style="width:3rem;height:3rem;"></div>
+                        <p class="mt-3 fw-bold text-primary">🤖 AI is analysing the vehicle…</p>
+                        <small class="text-muted">This may take a few seconds</small>
+                    </div>
+
+                </div><!-- /card-body -->
+            </div><!-- /card -->
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function showLoading() {
+        // Use timeout to ensure the form submission starts before disabling the button
+        setTimeout(function () {
+            document.getElementById('run-ml-btn').disabled = true;
+        }, 50);
+        document.getElementById('loading-overlay').classList.remove('d-none');
+    }
+</script>
+{% endblock %}

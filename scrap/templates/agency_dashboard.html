@@ -57,6 +57,7 @@
                             <th>Status</th>
                             <th>Submitted</th>
                             <th>Damage</th>
+                            <th>ML</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -77,15 +78,38 @@
                                 {% endif %}
                             </td>
                             <td>{{ request.submitted_at|date:"d M Y" }}</td>
-                            <td>{% if request.damage_level %}<span class="damage">{{ request.damage_level }}</span>{% else %}—{% endif %}</td>
+                            <td>
+                                {% if request.damage_level %}
+                                <span class="damage">{{ request.damage_level }}</span>
+                                {% else %}
+                                —
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if request.ml_processed %}
+                                <span class="ml-badge done" title="{{ request.prediction_timestamp|date:'d M Y H:i' }}">
+                                    🤖 Done
+                                </span>
+                                {% else %}
+                                <span class="ml-badge pending">Pending</span>
+                                {% endif %}
+                            </td>
                             <td>
                                 <div class="actions">
+                                    {% if not request.ml_processed %}
+                                    <a href="{% url 'ml_analyze_vehicle' request.id %}" class="btn small ml"
+                                        title="Run AI Analysis">
+                                        🤖 Analyze
+                                    </a>
+                                    {% endif %}
                                     <a href="{% url 'review_request' request.id %}" class="btn small primary">Review</a>
                                     {% if request.status == 'under_agency_review' %}
-                                    <a href="{% url 'forward_request' request.id %}" class="btn small success">Forward</a>
+                                    <a href="{% url 'forward_request' request.id %}"
+                                        class="btn small success">Forward</a>
                                     {% endif %}
                                     {% if request.vehicle.image %}
-                                    <a href="{{ request.vehicle.image.url }}" target="_blank" class="btn small outline">Image</a>
+                                    <a href="{{ request.vehicle.image.url }}" target="_blank"
+                                        class="btn small outline">Image</a>
                                     {% endif %}
                                 </div>
                             </td>
@@ -106,36 +130,219 @@
 </div>
 
 <style>
-.dashboard-wrapper { background: linear-gradient(135deg,#f5f7fa 0%,#f1f4f8 100%); padding:24px; }
-.container-fluid { max-width:1200px; margin:0 auto; }
-.dashboard-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:20px; }
-.dashboard-header h1{margin:0;font-size:28px}
-.header-sub{color:#6c757d}
-.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:20px}
-.stat-box{background:#fff;padding:18px;border-radius:12px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 18px rgba(15,23,42,0.04)}
-.stat-icon{width:64px;height:64px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px}
-.stat-icon.yellow{background:linear-gradient(135deg,#ffc107,#ffb300)}
-.stat-icon.cyan{background:linear-gradient(135deg,#17a2b8,#138496)}
-.stat-icon.green{background:linear-gradient(135deg,#28a745,#198754)}
-.stat-label{font-size:12px;color:#6c757d;text-transform:uppercase}
-.stat-number{font-size:28px;font-weight:700;margin:0}
-.content-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 6px 20px rgba(15,23,42,0.04)}
-.card-header{display:flex;align-items:center;gap:12px;padding:18px;border-bottom:1px solid #eef2f6}
-.card-header h2{margin:0;font-size:16px}
-.badge-total{margin-left:auto;background:#0d6efd;color:#fff;padding:6px 12px;border-radius:20px;font-weight:700}
-.requests-table th{background:#f8fafc;text-transform:uppercase;font-size:12px;color:#6c757d}
-.requests-table td{padding:14px}
-.reg{font-weight:700;color:#0d6efd}
-.owner-email{font-size:12px;color:#6c757d}
-.status-badge{display:inline-block;padding:6px 10px;border-radius:8px;font-weight:700}
-.status-badge.new{background:#fff3cd;color:#856404}
-.status-badge.review{background:#cfe2ff;color:#084298}
-.actions .btn{margin-right:6px;padding:8px 10px;border-radius:8px;text-decoration:none}
-.btn.small.primary{background:#0d6efd;color:#fff}
-.btn.small.success{background:#198754;color:#fff}
-.btn.small.outline{border:1px solid #dee2e6;color:#495057;background:#fff}
-.empty-state{padding:40px;text-align:center;color:#6c757d}
-.empty-state .icon-muted{font-size:48px;color:#e9ecef}
-@media (max-width:768px){.dashboard-header{flex-direction:column;align-items:flex-start}.badge-total{margin-left:0}}
+    .dashboard-wrapper {
+        background: linear-gradient(135deg, #f5f7fa 0%, #f1f4f8 100%);
+        padding: 24px;
+    }
+
+    .container-fluid {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .dashboard-header h1 {
+        margin: 0;
+        font-size: 28px
+    }
+
+    .header-sub {
+        color: #6c757d
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px
+    }
+
+    .stat-box {
+        background: #fff;
+        padding: 18px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04)
+    }
+
+    .stat-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 22px
+    }
+
+    .stat-icon.yellow {
+        background: linear-gradient(135deg, #ffc107, #ffb300)
+    }
+
+    .stat-icon.cyan {
+        background: linear-gradient(135deg, #17a2b8, #138496)
+    }
+
+    .stat-icon.green {
+        background: linear-gradient(135deg, #28a745, #198754)
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #6c757d;
+        text-transform: uppercase
+    }
+
+    .stat-number {
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0
+    }
+
+    .content-card {
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.04)
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 18px;
+        border-bottom: 1px solid #eef2f6
+    }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 16px
+    }
+
+    .badge-total {
+        margin-left: auto;
+        background: #0d6efd;
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 700
+    }
+
+    .requests-table th {
+        background: #f8fafc;
+        text-transform: uppercase;
+        font-size: 12px;
+        color: #6c757d
+    }
+
+    .requests-table td {
+        padding: 14px
+    }
+
+    .reg {
+        font-weight: 700;
+        color: #0d6efd
+    }
+
+    .owner-email {
+        font-size: 12px;
+        color: #6c757d
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-weight: 700
+    }
+
+    .status-badge.new {
+        background: #fff3cd;
+        color: #856404
+    }
+
+    .status-badge.review {
+        background: #cfe2ff;
+        color: #084298
+    }
+
+    .actions .btn {
+        margin-right: 6px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        text-decoration: none
+    }
+
+    .btn.small.primary {
+        background: #0d6efd;
+        color: #fff
+    }
+
+    .btn.small.success {
+        background: #198754;
+        color: #fff
+    }
+
+    .btn.small.outline {
+        border: 1px solid #dee2e6;
+        color: #495057;
+        background: #fff
+    }
+
+    .empty-state {
+        padding: 40px;
+        text-align: center;
+        color: #6c757d
+    }
+
+    .empty-state .icon-muted {
+        font-size: 48px;
+        color: #e9ecef
+    }
+
+    @media (max-width:768px) {
+        .dashboard-header {
+            flex-direction: column;
+            align-items: flex-start
+        }
+
+        .badge-total {
+            margin-left: 0
+        }
+    }
+
+    .ml-badge {
+        display: inline-block;
+        padding: 4px 9px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700
+    }
+
+    .ml-badge.done {
+        background: #e8f5e9;
+        color: #1b5e20
+    }
+
+    .ml-badge.pending {
+        background: #fff3e0;
+        color: #e65100
+    }
+
+    .btn.small.ml {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: #fff;
+        font-weight: 700
+    }
 </style>
 {% endblock %}

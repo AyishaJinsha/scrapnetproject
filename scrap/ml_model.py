@@ -82,6 +82,76 @@ _load_models()
 
 
 # ══════════════════════════════════════════════════════════════
+# VEHICLE VALIDATION
+# ══════════════════════════════════════════════════════════════
+
+def is_vehicle(image_path: str) -> bool:
+    """
+    Strict validation to check if the image contains a motor vehicle.
+    Uses color distribution and structural heuristics.
+    """
+    if not os.path.exists(image_path):
+        return False
+    
+    try:
+        with Image.open(image_path).convert("RGB") as img:
+            # Resize for faster processing
+            img_small = img.resize((128, 128))
+            arr = np.array(img_small, dtype=np.float32) / 255.0
+            
+            # 1. Channel Variance (Metallic vs. Colorful)
+            # Vehicles are mostly metallic (R, G, B are similar) or uniform.
+            # Organic objects (flowers) have high variance between channels.
+            pixel_variance = np.std(arr, axis=2)
+            avg_variance = np.mean(pixel_variance)
+            
+            # 2. Structural Heuristic (Vehicles have strong structural lines)
+            gray = np.mean(arr, axis=2)
+            dx = np.abs(np.diff(gray, axis=1))
+            dy = np.abs(np.diff(gray, axis=0))
+            edge_intensity = np.mean(dx) + np.mean(dy)
+            
+            # 3. Specific "Nature" Color Bias (Green/Pink check)
+            r, g, b = arr[..., 0], arr[..., 1], arr[..., 2]
+            
+            # Lush Green (Nature/Grass)
+            is_green = (g > 0.4) & (g > r * 1.2) & (g > b * 1.2)
+            green_score = np.mean(is_green)
+            
+            # Bright Pink/Magent (Common in flowers)
+            is_pink = (r > 0.5) & (b > 0.4) & (g < r * 0.7) & (g < b * 0.7)
+            pink_score = np.mean(is_pink)
+            
+            logger.info("Validation Diagnostic - File: %s, Var: %.4f, Edge: %.2f, Green: %.2f, Pink: %.2f",
+                        os.path.basename(image_path), avg_variance, edge_intensity, green_score, pink_score)
+
+            # --- Decision Logic ---
+            # Rejection criteria:
+            if avg_variance > 0.06:      # Too colorful/organic (Flower: 0.068, Car: 0.032)
+                logger.warning("Validation failed: Image is too colorful/organic (Var: %.4f)", avg_variance)
+                return False
+                
+            if green_score > 0.4:        # Too much grass/nature
+                logger.warning("Validation failed: Likely a nature/landscape photo (Green: %.2f)", green_score)
+                return False
+
+            if pink_score > 0.2:         # Too many pink flowers
+                logger.warning("Validation failed: Likely flowers (Pink: %.2f)", pink_score)
+                return False
+            
+            if edge_intensity < 0.04:    # Too plain (sky, wall) (Car: 0.12, Plain: < 0.03)
+                logger.warning("Validation failed: Lacks vehicle-like structure (Edge: %.2f)", edge_intensity)
+                return False
+
+            logger.info("Vehicle validation passed")
+            return True
+            
+    except Exception as e:
+        logger.error("Vehicle validation error: %s", e)
+        return False
+
+
+# ══════════════════════════════════════════════════════════════
 # PUBLIC API
 # ══════════════════════════════════════════════════════════════
 

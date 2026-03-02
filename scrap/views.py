@@ -233,6 +233,16 @@ def ml_analyze_vehicle(request, request_id):
             start_ml = time.time()
             try:
                 image_path = vehicle.image.path
+                
+                # ── 0. Vehicle Validation (Strict) ────────────────────
+                if not ml_model.is_vehicle(image_path):
+                    messages.error(
+                        request, 
+                        "Invalid image: The uploaded image does not contain a vehicle. "
+                        "Damage detection and price prediction cannot be performed."
+                    )
+                    return redirect('agency_dashboard')
+
                 damage_level = ml_model.predict_damage(image_path)
                 ml_duration = time.time() - start_ml
                 logger.info(f"Total ML Analysis time: {ml_duration:.4f}s")

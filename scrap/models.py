@@ -14,8 +14,13 @@ class Profile(models.Model):
         return f"{self.user.username} - {self.role}"
 
 class Vehicle(models.Model):
+    VEHICLE_TYPE_CHOICES = [
+        ('TWO_WHEELER', 'Two Wheeler'),
+        ('THREE_WHEELER', 'Three Wheeler'),
+        ('FOUR_WHEELER', 'Four Wheeler'),
+    ]
     registration_number = models.CharField(max_length=20, unique=True)
-    vehicle_type = models.CharField(max_length=50)
+    vehicle_type = models.CharField(max_length=50, choices=VEHICLE_TYPE_CHOICES)
     age = models.PositiveIntegerField()  # in years
     mileage = models.PositiveIntegerField()  # in km
     image = models.ImageField(upload_to='vehicle_images/', blank=True, null=True)

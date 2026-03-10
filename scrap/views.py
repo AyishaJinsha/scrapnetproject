@@ -390,6 +390,14 @@ def view_request_detail(request, request_id):
     return render(request, 'request_detail.html', {'scrap_request': scrap_request})
 
 @login_required
+def about_page(request):
+    return render(request, 'about.html')
+
+@login_required
+def terms_page(request):
+    return render(request, 'terms.html')
+
+@login_required
 def download_certificate(request, request_id):
     """Generate and download a digital scrap certificate as PDF (with reportlab fallback to text)."""
     from django.http import HttpResponse

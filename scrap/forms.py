@@ -1,13 +1,23 @@
 from django import forms
+from django.core.validators import RegexValidator
 from .models import Vehicle
 
 class VehicleForm(forms.ModelForm):
+    registration_number = forms.CharField(
+        validators=[
+            RegexValidator(
+                regex=r'^[A-Z]{2}-[0-9]{2}-[A-Z]{2}-[0-9]{4}$',
+                message="Enter a valid vehicle registration number (Example: KL-07-AB-1234)"
+            )
+        ],
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'KL-07-AB-1234'})
+    )
+
     class Meta:
         model = Vehicle
         fields = ['registration_number', 'vehicle_type', 'age', 'mileage', 'image']
         widgets = {
-            'registration_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., ABC-123'}),
-            'vehicle_type': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., Sedan, SUV'}),
+            'vehicle_type': forms.Select(attrs={'class': 'form-select'}),
             'age': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'mileage': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
             'image': forms.FileInput(attrs={'class': 'form-control'}),

@@ -67,6 +67,14 @@
                 href="{% url 'view_requests' %}">
                 <i class="fa-solid fa-list"></i> My Requests
             </a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}"
+                href="{% url 'about' %}">
+                <i class="fa-solid fa-circle-info"></i> About Us
+            </a>
+            <a class="nav-link {% if request.resolver_match.url_name == 'terms' %}active{% endif %}"
+                href="{% url 'terms' %}">
+                <i class="fa-solid fa-file-invoice"></i> Terms & Conditions
+            </a>
             {% elif user.profile.role == 'agency' %}
             <div class="text-white-50 fw-bold px-3 mb-1 mt-3 text-uppercase"
                 style="letter-spacing: 1px; font-size: 0.85rem;">Agency</div>
@@ -111,6 +119,10 @@
                     Submit Vehicle</a>
                 <a class="nav-link text-white-50" href="{% url 'view_requests' %}"><i class="fa-solid fa-list me-2"></i>
                     My Requests</a>
+                <a class="nav-link text-white-50" href="{% url 'about' %}"><i class="fa-solid fa-circle-info me-2"></i>
+                    About Us</a>
+                <a class="nav-link text-white-50" href="{% url 'terms' %}"><i class="fa-solid fa-file-invoice me-2"></i>
+                    Terms & Conditions</a>
                 {% elif user.profile.role == 'agency' %}
                 <a class="nav-link text-white-50" href="{% url 'agency_dashboard' %}"><i
                         class="fa-solid fa-building me-2"></i> Dashboard</a>

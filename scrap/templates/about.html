@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <h2 class="h4 mb-0 fw-bold text-primary">
+                        <i class="fa-solid fa-circle-info me-2"></i> About ScrapNet
+                    </h2>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <section class="mb-5">
+                        <h3 class="h5 fw-bold mb-3 border-start border-4 border-primary ps-3">What is ScrapNet?</h3>
+                        <p class="text-muted lead-sm">
+                            ScrapNet is a smart web-based platform designed to simplify and digitize the vehicle
+                            scrapping process. It connects vehicle owners, authorized scrap agencies, and RTO officials
+                            in one system to ensure a transparent and legally compliant scrapping workflow.
+                        </p>
+                    </section>
+
+                    <section class="mb-5">
+                        <h3 class="h5 fw-bold mb-3 border-start border-4 border-primary ps-3">Purpose of the System</h3>
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3 h-100">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fa-solid fa-car-side text-primary me-2"></i>
+                                        <span class="fw-semibold">Vehicle Submissions</span>
+                                    </div>
+                                    <p class="small text-muted mb-0">Allow vehicle owners to submit vehicles for
+                                        scrapping easily.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3 h-100">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fa-solid fa-magnifying-glass text-primary me-2"></i>
+                                        <span class="fw-semibold">Agency Inspections</span>
+                                    </div>
+                                    <p class="small text-muted mb-0">Allow agencies to inspect vehicles and estimate
+                                        scrap value digitially.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3 h-100">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fa-solid fa-user-shield text-primary me-2"></i>
+                                        <span class="fw-semibold">RTO Verification</span>
+                                    </div>
+                                    <p class="small text-muted mb-0">Allow RTO officers to verify and approve requests
+                                        securely.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-light rounded-3 h-100">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="fa-solid fa-certificate text-primary me-2"></i>
+                                        <span class="fw-semibold">Digital Certificates</span>
+                                    </div>
+                                    <p class="small text-muted mb-0">Generate digital scrap certificates instantly after
+                                        approval.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="mb-5">
+                        <h3 class="h5 fw-bold mb-3 border-start border-4 border-primary ps-3">Key Objectives</h3>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item bg-transparent px-0 py-3">
+                                <div class="d-flex align-items-start">
+                                    <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-3">
+                                        <i class="fa-solid fa-leaf text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Environmental Protection</h6>
+                                        <p class="small text-muted mb-0">Reduce environmental pollution from old and
+                                            inefficient vehicles.</p>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="list-group-item bg-transparent px-0 py-3">
+                                <div class="d-flex align-items-start">
+                                    <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-3">
+                                        <i class="fa-solid fa-shield-halved text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Road Safety</h6>
+                                        <p class="small text-muted mb-0">Improve overall road safety by removing unfit
+                                            vehicles.</p>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="list-group-item bg-transparent px-0 py-3">
+                                <div class="d-flex align-items-start">
+                                    <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-3">
+                                        <i class="fa-solid fa-recycle text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Resource Recycling</h6>
+                                        <p class="small text-muted mb-0">Promote recycling of materials such as steel
+                                            and aluminium.</p>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="list-group-item bg-transparent px-0 py-3">
+                                <div class="d-flex align-items-start">
+                                    <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-3">
+                                        <i class="fa-solid fa-file-contract text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Legal Compliance</h6>
+                                        <p class="small text-muted mb-0">Ensure legal deregistration of vehicles from
+                                            government records.</p>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="h5 fw-bold mb-3 border-start border-4 border-primary ps-3">System Benefits</h3>
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fa-solid fa-check-circle text-success me-2"></i>
+                                    <span>Digital vehicle submission</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fa-solid fa-check-circle text-success me-2"></i>
+                                    <span>Transparent status tracking</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fa-solid fa-check-circle text-success me-2"></i>
+                                    <span>Secure record management</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fa-solid fa-check-circle text-success me-2"></i>
+                                    <span>Digital certificate generation</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .lead-sm {
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+
+    .rounded-3 {
+        border-radius: 1rem !important;
+    }
+
+    .bg-light {
+        background-color: #f8fbff !important;
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .bg-light:hover {
+        transform: translateY(-3px);
+    }
+</style>
+{% endblock %}

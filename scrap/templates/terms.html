@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom-0">
+                    <h2 class="h4 mb-0 fw-bold text-primary">
+                        <i class="fa-solid fa-file-invoice me-2"></i> Terms & Conditions
+                    </h2>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <section class="mb-5">
+                        <h3 class="h5 fw-bold mb-3 border-start border-4 border-warning ps-3">Vehicle Scrapping
+                            Regulations</h3>
+                        <p class="text-muted">
+                            Vehicles older than recommended operational age should be scrapped through authorized
+                            facilities to ensure safe disposal and legal deregistration.
+                        </p>
+                    </section>
+
+                    <section class="mb-5">
+                        <h3 class="h5 fw-bold mb-3 border-start border-4 border-warning ps-3">Eligible Vehicles</h3>
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <div class="p-3 bg-light rounded shadow-sm border-top border-3 border-warning">
+                                    <h6 class="fw-bold mb-1">Private Vehicles</h6>
+                                    <p class="small text-muted mb-0">Older than 20 years</p>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="p-3 bg-light rounded shadow-sm border-top border-3 border-warning">
+                                    <h6 class="fw-bold mb-1">Commercial Vehicles</h6>
+                                    <p class="small text-muted mb-0">Older than 15 years (if failed fitness test)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="mb-5">
+                        <h3 class="h5 fw-bold mb-3 border-start border-4 border-warning ps-3">Owner Responsibilities
+                        </h3>
+                        <p class="text-muted mb-3">Users must provide accurate vehicle details and necessary documents
+                            including:</p>
+                        <ul class="list-group list-group-flush border-top border-bottom mb-4">
+                            <li class="list-group-item bg-transparent d-flex align-items-center">
+                                <i class="fa-solid fa-circle-check text-success me-3"></i> Registration Certificate (RC)
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex align-items-center">
+                                <i class="fa-solid fa-circle-check text-success me-3"></i> Identity Proof (Aadhaar /
+                                PAN)
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex align-items-center">
+                                <i class="fa-solid fa-circle-check text-success me-3"></i> No Objection Certificate
+                                (NOC) if loan exists
+                            </li>
+                            <li class="list-group-item bg-transparent d-flex align-items-center">
+                                <i class="fa-solid fa-circle-check text-success me-3"></i> Declaration confirming no
+                                legal issues
+                            </li>
+                        </ul>
+                    </section>
+
+                    <section class="mb-5">
+                        <h3 class="h5 fw-bold mb-3 border-start border-4 border-warning ps-3">Scrapping Process</h3>
+                        <div class="timeline ps-3 border-start">
+                            <div class="timeline-item mb-4 position-relative">
+                                <span class="badge rounded-pill bg-primary position-absolute start-0 translate-middle-x"
+                                    style="left: -1rem !important;">1</span>
+                                <div class="ms-4">
+                                    <h6 class="fw-bold mb-1">Submission</h6>
+                                    <p class="small text-muted">User submits vehicle details via ScrapNet dashboard.</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item mb-4 position-relative">
+                                <span class="badge rounded-pill bg-primary position-absolute start-0 translate-middle-x"
+                                    style="left: -1rem !important;">2</span>
+                                <div class="ms-4">
+                                    <h6 class="fw-bold mb-1">Agency Review</h6>
+                                    <p class="small text-muted">Authorized agency reviews the request and inspects the
+                                        vehicle.</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item mb-4 position-relative">
+                                <span class="badge rounded-pill bg-primary position-absolute start-0 translate-middle-x"
+                                    style="left: -1rem !important;">3</span>
+                                <div class="ms-4">
+                                    <h6 class="fw-bold mb-1">RTO Forwarding</h6>
+                                    <p class="small text-muted">Agency forwards the request to RTO for official
+                                        cancellation.</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item mb-4 position-relative">
+                                <span class="badge rounded-pill bg-primary position-absolute start-0 translate-middle-x"
+                                    style="left: -1rem !important;">4</span>
+                                <div class="ms-4">
+                                    <h6 class="fw-bold mb-1">Approval & Scrapping</h6>
+                                    <p class="small text-muted">RTO approves the request, vehicle is scrapped, and
+                                        certificate issued.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-6">
+                            <div class="p-4 bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded-3">
+                                <h3 class="h5 fw-bold mb-3"><i class="fa-solid fa-indian-rupee-sign me-2"></i> Financial
+                                    Terms</h3>
+                                <p class="small text-muted mb-0">
+                                    Scrap value depends on vehicle condition and metal weight and may range between
+                                    ₹15–₹20 per kg or 4–6% of the vehicle’s original price.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-4 bg-info bg-opacity-10 border border-info border-opacity-25 rounded-3 h-100">
+                                <h3 class="h5 fw-bold mb-3"><i class="fa-solid fa-umbrella text-info me-2"></i>
+                                    Insurance</h3>
+                                <p class="small text-muted mb-0">
+                                    Vehicle owners must inform their insurance provider to cancel the policy after
+                                    vehicle deregistration is complete.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-secondary border-0 mb-0">
+                        <p class="small mb-0 text-center text-muted italic">
+                            By using ScrapNet, you agree to comply with all regional transport authority (RTO)
+                            guidelines and environmental regulations.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .timeline {
+        border-color: #dee2e6 !important;
+    }
+
+    .italic {
+        font-style: italic;
+    }
+</style>
+{% endblock %}

@@ -101,6 +101,7 @@
                             <th>Submitted</th>
                             <th>Damage Level</th>
                             <th>Scrap Price</th>
+                            <th>Payment</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -151,6 +152,24 @@
                                 <span class="price-text">₹{{ request.scrap_price }}</span>
                                 {% else %}
                                 <span class="empty-text">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if request.payment_status == 'completed' %}
+                                <div class="payment-status">
+                                    <span class="status-badge approved" style="background:#d1e7dd; color:#0a3622; font-size: 11px; padding: 4px 8px;">
+                                        <i class="fa-solid fa-check-circle"></i> Payment Completed
+                                    </span>
+                                    <div class="payment-meta mt-1 px-1" style="font-size: 11px; font-weight: 600; color: #198754;">
+                                        ₹{{ request.scrap_price }} | {{ request.payment_date|date:"d M Y" }}
+                                    </div>
+                                </div>
+                                {% elif request.status == 'approved' %}
+                                <span class="status-badge review" style="background:#fff3cd; color:#856404; font-size: 11px; padding: 4px 8px;">
+                                    <i class="fa-solid fa-clock"></i> Payment Pending
+                                </span>
+                                {% else %}
+                                <span class="empty-text" style="font-size: 12px; color: #adb5bd;">—</span>
                                 {% endif %}
                             </td>
                             <td>

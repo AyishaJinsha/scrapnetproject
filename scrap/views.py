@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.db.models import Q
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from .models import Profile, Vehicle, ScrapRequest, Notification, ActionLog
+from .models import Profile, Vehicle, ScrapRequest, Notification, ActionLog, Payment
 from .forms import VehicleForm, CustomUserCreationForm
 import logging
 from . import ml_model   # ← ML integration (loaded once at startup)
@@ -108,7 +109,7 @@ def agency_dashboard(request):
     if profile.role != 'agency':
         return redirect('dashboard')
     all_requests = ScrapRequest.objects.filter(
-        status__in=['submitted', 'under_agency_review']
+        Q(status='submitted') | Q(agency=request.user, status__in=['under_agency_review', 'approved'])
     ).select_related('vehicle', 'user')
     pending_requests = all_requests.filter(status='submitted').count()
     in_review_requests = all_requests.filter(status='under_agency_review').count()
@@ -375,7 +376,17 @@ def mark_notification_read(request, notification_id):
     notification = get_object_or_404(Notification, id=notification_id, user=request.user)
     notification.is_read = True
     notification.save()
-    return redirect('user_dashboard')
+    next_url = request.GET.get('next', request.META.get('HTTP_REFERER', 'dashboard'))
+    return redirect(next_url)
+
+@login_required
+def all_notifications(request):
+    notifications = Notification.objects.filter(
+        user=request.user
+    ).order_by('-created_at')
+    # Mark all as read when viewing this page
+    notifications.filter(is_read=False).update(is_read=True)
+    return render(request, 'all_notifications.html', {'notifications': notifications})
 @login_required
 def view_request_detail(request, request_id):
     """View detailed information about a specific scrap request"""
@@ -388,6 +399,58 @@ def view_request_detail(request, request_id):
         return redirect('user_dashboard')
     
     return render(request, 'request_detail.html', {'scrap_request': scrap_request})
+
+@login_required
+def process_payment(request, request_id):
+    """
+    Agency processes the dummy payment for an approved scrap request.
+    """
+    profile = get_object_or_404(Profile, user=request.user)
+    if profile.role != 'agency':
+        messages.error(request, 'Only agency users can process payments.')
+        return redirect('dashboard')
+    
+    scrap_request = get_object_or_404(ScrapRequest, id=request_id, status='approved')
+    
+    # Create or get payment object
+    payment, created = Payment.objects.get_or_create(
+        scrap_request=scrap_request,
+        defaults={
+            'user': scrap_request.user,
+            'amount': scrap_request.scrap_price or 0,
+            'payment_status': 'pending'
+        }
+    )
+
+    if request.method == 'POST':
+        payment.payment_status = 'completed'
+        payment.payment_date = timezone.now()
+        payment.save()
+        
+        # Update denormalized status in ScrapRequest
+        scrap_request.payment_status = 'completed'
+        scrap_request.payment_date = payment.payment_date
+        scrap_request.save()
+        
+        ActionLog.objects.create(
+            scrap_request=scrap_request,
+            user=request.user,
+            action='Payment Released',
+            details=f"Dummy payment of ₹{scrap_request.scrap_price} transferred to vehicle owner."
+        )
+        
+        Notification.objects.create(
+            user=scrap_request.user,
+            message=(
+                f"💰 Payment Received! ₹{scrap_request.scrap_price:,.2f} has been "
+                f"successfully transferred for your vehicle {scrap_request.vehicle.registration_number}."
+            )
+        )
+        
+        messages.success(request, 'Payment successfully transferred to user.')
+        return redirect('agency_dashboard')
+        
+    return render(request, 'process_payment.html', {'scrap_request': scrap_request})
 
 @login_required
 def about_page(request):

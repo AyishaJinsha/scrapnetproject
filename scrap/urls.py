@@ -21,4 +21,6 @@ urlpatterns = [
     path('ml_analyze/<int:request_id>/', views.ml_analyze_vehicle, name='ml_analyze_vehicle'),
     path('about/', views.about_page, name='about'),
     path('terms/', views.terms_page, name='terms'),
+    path('notifications/', views.all_notifications, name='all_notifications'),
+    path('process_payment/<int:request_id>/', views.process_payment, name='process_payment'),
 ]

@@ -43,6 +43,8 @@ class ScrapRequest(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='submitted')
     damage_level = models.CharField(max_length=50, blank=True, null=True)
     scrap_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    payment_status = models.CharField(max_length=20, default='pending')
+    payment_date = models.DateTimeField(null=True, blank=True)
     # ── ML fields ──────────────────────────────────────────────
     ml_processed = models.BooleanField(default=False)
     prediction_timestamp = models.DateTimeField(blank=True, null=True)
@@ -73,3 +75,17 @@ class ActionLog(models.Model):
 
     def __str__(self):
         return f"{self.action} on {self.scrap_request} at {self.timestamp}"
+
+class Payment(models.Model):
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+    ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payments')
+    scrap_request = models.ForeignKey(ScrapRequest, on_delete=models.CASCADE, related_name='payments')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
+    payment_date = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Payment for {self.scrap_request.vehicle.registration_number} - {self.payment_status}"

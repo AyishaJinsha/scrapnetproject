@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="payment-wrapper">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="payment-card">
+                    <div class="payment-icon text-center mb-4">
+                        <i class="fa-solid fa-money-bill-transfer fa-3x" style="color: #28a745;"></i>
+                    </div>
+                    
+                    <h2 class="payment-title text-center mb-2">Final Payment</h2>
+                    <p class="payment-subtitle text-center mb-4 text-muted">Transfer funds to vehicle owner</p>
+
+                    <div class="info-grid p-4 rounded-3 mb-4" style="background: #f8f9fa;">
+                        <div class="info-item d-flex justify-content-between py-2 border-bottom">
+                            <span class="label text-muted text-uppercase fw-bold" style="font-size: 12px;">Payee</span>
+                            <span class="value fw-bold">{{ scrap_request.user.get_full_name|default:scrap_request.user.username }}</span>
+                        </div>
+                        <div class="info-item d-flex justify-content-between py-2 border-bottom">
+                            <span class="label text-muted text-uppercase fw-bold" style="font-size: 12px;">Vehicle</span>
+                            <span class="value fw-bold">{{ scrap_request.vehicle.registration_number }}</span>
+                        </div>
+                        <div class="info-item d-flex justify-content-between py-2">
+                            <span class="label text-muted text-uppercase fw-bold" style="font-size: 12px;">Amount</span>
+                            <span class="value fw-bold text-success" style="font-size: 1.2rem;">₹{{ scrap_request.scrap_price }}</span>
+                        </div>
+                    </div>
+
+                    <div class="sim-alert d-flex align-items-center justify-content-center gap-2 p-3 rounded-3 mb-4" style="background: #e3f2fd; color: #007bff; font-weight: 600;">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>Secure Simulated Transaction</span>
+                    </div>
+
+                    <form method="POST" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-grid gap-3">
+                            <button type="submit" class="btn btn-success btn-lg fw-bold py-3 rounded-3 shadow-sm border-0" style="background: linear-gradient(135deg, #28a745 0%, #198754 100%);">
+                                Confirm & Transfer Payment
+                            </button>
+                            <a href="{% url 'agency_dashboard' %}" class="btn btn-link text-muted text-decoration-none fw-bold">Back to Dashboard</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.payment-wrapper {
+    background: linear-gradient(135deg, #f5f7fa 0%, #eef2f7 100%);
+    min-height: 80vh;
+    padding-top: 50px;
+}
+.payment-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+}
+.payment-title {
+    font-weight: 800;
+    color: #1a202c;
+}
+.info-item .label {
+    letter-spacing: 0.5px;
+}
+</style>
+{% endblock %}

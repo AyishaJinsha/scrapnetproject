@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="an-wrapper">
+    <div class="an-container">
+
+        <div class="an-header">
+            <div>
+                <h1 class="an-title">🔔 All Notifications</h1>
+                <p class="an-sub">Your complete notification history</p>
+            </div>
+            <a href="javascript:history.back()" class="an-back-btn">← Back</a>
+        </div>
+
+        {% if notifications %}
+        <div class="an-list">
+            {% for notif in notifications %}
+            <div class="an-item {% if not notif.is_read %}an-unread{% endif %}">
+                <div class="an-item-icon">
+                    {% if '✅' in notif.message %}
+                        <span class="an-icon an-icon-green">✅</span>
+                    {% elif '❌' in notif.message %}
+                        <span class="an-icon an-icon-red">❌</span>
+                    {% elif '🤖' in notif.message %}
+                        <span class="an-icon an-icon-purple">🤖</span>
+                    {% else %}
+                        <span class="an-icon an-icon-blue">📋</span>
+                    {% endif %}
+                </div>
+                <div class="an-item-body">
+                    <p class="an-msg">{{ notif.message }}</p>
+                    <span class="an-time">{{ notif.created_at|date:"d M Y, H:i" }}</span>
+                </div>
+                {% if not notif.is_read %}
+                <span class="an-new-dot"></span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="an-empty">
+            <i class="fa-regular fa-bell-slash"></i>
+            <h3>No Notifications</h3>
+            <p>You're all caught up! Notifications will appear here when there's activity on your requests.</p>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<style>
+    .an-wrapper {
+        background: linear-gradient(135deg, #f5f7fa 0%, #f1f4f8 100%);
+        min-height: 100vh;
+        padding: 28px 20px;
+    }
+    .an-container {
+        max-width: 760px;
+        margin: 0 auto;
+    }
+    .an-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 24px;
+    }
+    .an-title {
+        font-size: 1.7rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+    }
+    .an-sub {
+        color: #64748b;
+        margin: 4px 0 0;
+        font-size: 0.9rem;
+    }
+    .an-back-btn {
+        padding: 8px 18px;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 999px;
+        color: #475569;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 600;
+        background: #fff;
+        transition: all 0.2s;
+    }
+    .an-back-btn:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #1e293b;
+    }
+    .an-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .an-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        background: #fff;
+        border-radius: 14px;
+        padding: 16px 18px;
+        box-shadow: 0 2px 12px rgba(15,23,42,0.05);
+        border-left: 4px solid transparent;
+        position: relative;
+        transition: box-shadow 0.2s;
+    }
+    .an-item:hover {
+        box-shadow: 0 4px 20px rgba(15,23,42,0.09);
+    }
+    .an-item.an-unread {
+        border-left-color: #3b82f6;
+        background: #eff6ff;
+    }
+    .an-icon {
+        font-size: 1.4rem;
+        line-height: 1;
+    }
+    .an-item-body {
+        flex: 1;
+        min-width: 0;
+    }
+    .an-msg {
+        font-size: 0.9rem;
+        color: #334155;
+        margin: 0 0 6px;
+        line-height: 1.5;
+    }
+    .an-time {
+        font-size: 0.75rem;
+        color: #94a3b8;
+    }
+    .an-new-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #3b82f6;
+        flex-shrink: 0;
+        margin-top: 5px;
+    }
+    .an-empty {
+        text-align: center;
+        padding: 60px 20px;
+        color: #94a3b8;
+    }
+    .an-empty i {
+        font-size: 3.5rem;
+        display: block;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+    .an-empty h3 {
+        color: #64748b;
+        font-size: 1.2rem;
+        margin-bottom: 8px;
+    }
+    .an-empty p {
+        font-size: 0.9rem;
+        max-width: 340px;
+        margin: 0 auto;
+    }
+    @media (max-width: 600px) {
+        .an-header { flex-direction: column; gap: 12px; }
+    }
+</style>
+{% endblock %}
